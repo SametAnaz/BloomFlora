@@ -110,7 +110,7 @@ export default function Home() {
 
           {/* Instagram */}
           <a 
-            href="https://www.instagram.com/p/DT0xmZFjCdf/?igsh=aWluZGw3YTU4cTZy"
+            href="https://www.instagram.com/bloomflorarize?igsh=bWNpczI3d2MxdGc2"
             target="_blank"
             rel="noopener noreferrer"
             className="group relative flex items-center gap-4 bg-[#4a1524]/80 backdrop-blur-md rounded-2xl px-8 py-5 border border-[#f5e6d3]/30 hover:border-[#f5e6d3]/60 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 w-full md:w-auto"
