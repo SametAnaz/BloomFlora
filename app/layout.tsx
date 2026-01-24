@@ -124,6 +124,11 @@ export default function RootLayout({
     <html lang="tr">
       <head>
         <script
+          defer
+          src="https://umami.metropolreklam.net/script.js"
+          data-website-id="c65672a6-edde-4f6f-9e33-968722cbdd60"
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
