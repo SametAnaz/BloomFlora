@@ -9,6 +9,9 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/types';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 type ItemRow = Database['public']['Tables']['items']['Row'];
 type CategoryRow = Database['public']['Tables']['categories']['Row'];
 

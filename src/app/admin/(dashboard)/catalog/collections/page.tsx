@@ -8,6 +8,9 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/types';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 type CollectionRow = Database['public']['Tables']['collections']['Row'];
 
 export default async function CollectionsPage() {

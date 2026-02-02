@@ -12,6 +12,9 @@ import { initializeModules } from '@/modules';
 import { ThemeProvider } from '@/lib/theme';
 import { getActiveTheme } from '@/lib/theme/getTheme';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 // Initialize modules on server
 initializeModules();
 

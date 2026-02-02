@@ -12,6 +12,9 @@ import type { PageData } from '@/lib/page-builder/types';
 import { createClient } from '@/lib/supabase/server';
 import type { Database, BlockConfig } from '@/lib/supabase/types';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 type PageRow = Database['public']['Tables']['pages']['Row'];
 
 interface PageEditorPageProps {

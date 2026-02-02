@@ -7,6 +7,9 @@ import Link from 'next/link';
 
 import { createClient } from '@/lib/supabase/server';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 interface StatCardProps {
   title: string;
   value: string | number;

@@ -16,6 +16,9 @@ import {
   type ThemeTokens,
 } from '@/lib/theme/tokens';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 interface ThemeRow {
   id: string;
   name: string;

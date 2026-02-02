@@ -7,6 +7,9 @@ import { AdminShell } from '@/components/admin/admin-shell';
 import { createClient } from '@/lib/supabase/server';
 import { initializeModules } from '@/modules';
 
+// Force dynamic rendering (uses cookies for Supabase auth)
+export const dynamic = 'force-dynamic';
+
 // Initialize modules for page builder
 initializeModules();
 

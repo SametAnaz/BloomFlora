@@ -12,6 +12,9 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 type CollectionRow = Database['public']['Tables']['collections']['Row'];
 type CollectionUpdate = Database['public']['Tables']['collections']['Update'];
 type ItemRow = Database['public']['Tables']['items']['Row'];

@@ -10,6 +10,9 @@ import type { Database } from '@/lib/supabase/types';
 
 import type { BlockInstance } from '@/modules/types';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 type PageRow = Database['public']['Tables']['pages']['Row'];
 
 // Ensure modules are initialized

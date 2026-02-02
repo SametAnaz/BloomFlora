@@ -19,6 +19,9 @@ import {
 } from '@/lib/media';
 import { createClient } from '@/lib/supabase/client';
 
+// Force dynamic rendering (uses cookies for Supabase)
+export const dynamic = 'force-dynamic';
+
 export default function MediaPage() {
   const [media, setMedia] = useState<MediaFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
