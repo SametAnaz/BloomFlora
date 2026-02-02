@@ -6,8 +6,11 @@
 import { PageRenderer, initializeModules } from '@/modules';
 
 import { createClient } from '@/lib/supabase/server';
+import type { Database } from '@/lib/supabase/types';
 
 import type { BlockInstance } from '@/modules/types';
+
+type PageRow = Database['public']['Tables']['pages']['Row'];
 
 // Ensure modules are initialized
 initializeModules();
@@ -81,32 +84,37 @@ export default async function HomePage() {
 
   try {
     const supabase = await createClient();
+    let pageData: PageRow | null = null;
     
     // First try to get the home page - by is_homepage flag
-    let { data, error } = await supabase
+    const { data: homePage } = await supabase
       .from('pages')
       .select('*')
       .eq('is_homepage', true)
       .single();
 
-    // Fallback to common homepage slugs if no homepage flag set
-    if (error || !data) {
-      const result = await supabase
+    if (homePage) {
+      pageData = homePage as PageRow;
+    } else {
+      // Fallback to common homepage slugs if no homepage flag set
+      const { data: slugPage } = await supabase
         .from('pages')
         .select('*')
         .in('slug', ['home', 'anasayfa', 'ana-sayfa'])
         .limit(1)
         .single();
-      data = result.data;
-      error = result.error;
+      
+      if (slugPage) {
+        pageData = slugPage as PageRow;
+      }
     }
     
-    console.log('[HomePage] Fetched page:', data?.slug, 'blocks count:', data?.blocks?.length);
+    console.log('[HomePage] Fetched page:', pageData?.slug, 'blocks count:', pageData?.blocks?.length);
     
-    if (data) {
+    if (pageData) {
       // Check if blocks exist and are valid
-      if (data.blocks && Array.isArray(data.blocks) && data.blocks.length > 0) {
-        blocks = data.blocks as BlockInstance[];
+      if (pageData.blocks && Array.isArray(pageData.blocks) && pageData.blocks.length > 0) {
+        blocks = pageData.blocks as BlockInstance[];
         console.log('[HomePage] Using database blocks:', blocks.length);
       } else {
         console.log('[HomePage] No blocks in database, using demo');
