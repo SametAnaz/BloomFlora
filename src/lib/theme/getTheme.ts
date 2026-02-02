@@ -21,6 +21,36 @@ type ThemeRow = Database['public']['Tables']['theme']['Row'];
  * Use this in Server Components or Server Actions
  */
 export async function getActiveTheme(): Promise<ThemeTokens> {
+  // Skip during build time (no cookies available)
+  if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
+    // Check if we're in a request context by trying to access headers
+    try {
+      const supabase = await createClient();
+
+      const { data, error } = await supabase
+        .from('theme')
+        .select('tokens')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        // Silently return default theme on error (don't log during build)
+        return defaultThemeTokens;
+      }
+
+      const themeData = data as Pick<ThemeRow, 'tokens'> | null;
+
+      if (!themeData?.tokens) {
+        return defaultThemeTokens;
+      }
+
+      return parseThemeFromDatabase(themeData.tokens);
+    } catch {
+      // Return default theme if cookies not available (build time)
+      return defaultThemeTokens;
+    }
+  }
+
   try {
     const supabase = await createClient();
 
