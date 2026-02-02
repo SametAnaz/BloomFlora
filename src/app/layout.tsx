@@ -1,6 +1,10 @@
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { ThemeStyleInjector } from "@/components/theme-style-injector";
+
 import type { Metadata } from "next";
+
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -122,8 +126,9 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="tr">
+    <html lang="tr" suppressHydrationWarning>
       <head>
+        <ThemeStyleInjector />
         <script
           defer
           src="https://umami.metropolreklam.net/script.js"
