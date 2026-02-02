@@ -24,22 +24,35 @@ export default function AdminLoginPage() {
     setError(null);
     setLoading(true);
 
+    console.log('Login attempt for:', email);
+
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('Supabase auth response:', { data, error: authError });
+
       if (authError) {
-        setError('Geçersiz e-posta veya şifre');
+        console.error('Auth error:', authError);
+        if (authError.message.includes('Invalid login credentials')) {
+          setError('Geçersiz e-posta veya şifre');
+        } else if (authError.message.includes('Email not confirmed')) {
+          setError('E-posta adresiniz henüz doğrulanmamış');
+        } else {
+          setError(authError.message || 'Giriş yapılamadı');
+        }
         return;
       }
 
+      console.log('Login successful, redirecting...');
       router.push('/admin');
       router.refresh();
-    } catch {
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+    } catch (err) {
+      console.error('Login exception:', err);
+      setError('Bir hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata'));
     } finally {
       setLoading(false);
     }
