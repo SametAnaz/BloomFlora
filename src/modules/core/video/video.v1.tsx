@@ -212,6 +212,17 @@ function VideoV1Editor({
         </p>
       </div>
 
+      <div>
+        <label className="mb-1 block text-sm font-medium">Küçük Resim URL (Opsiyonel)</label>
+        <input
+          type="text"
+          placeholder="https://..."
+          value={config.thumbnail || ''}
+          onChange={(e) => onChange({ ...config, thumbnail: e.target.value })}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-1 block text-sm font-medium">En-Boy Oranı</label>

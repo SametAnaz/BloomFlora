@@ -226,48 +226,78 @@ function ContactFormV1Editor({
   return (
     <div className="space-y-4 p-4">
       <div>
-        <label className="text-sm font-medium">Başlık</label>
+        <label className="mb-1 block text-sm font-medium">Başlık</label>
         <input
           type="text"
           value={config.title}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium">Alt Başlık</label>
+        <label className="mb-1 block text-sm font-medium">Alt Başlık</label>
         <input
           type="text"
           value={config.subtitle || ''}
           onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           placeholder="Opsiyonel"
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium">Gönder Butonu Metni</label>
-        <input
-          type="text"
-          value={config.submitText}
-          onChange={(e) => onChange({ ...config, submitText: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium">Gönder Metni</label>
+          <input
+            type="text"
+            value={config.submitText}
+            onChange={(e) => onChange({ ...config, submitText: e.target.value })}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Form Düzeni</label>
+          <select
+            value={config.layout}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                layout: e.target.value as ContactFormV1Config['layout'],
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="stacked">Üst Üste</option>
+            <option value="inline">Yan Yana</option>
+          </select>
+        </div>
       </div>
 
       <div>
-        <label className="text-sm font-medium">Başarı Mesajı</label>
+        <label className="mb-1 block text-sm font-medium">Başarı Mesajı</label>
         <input
           type="text"
           value={config.successMessage}
           onChange={(e) => onChange({ ...config, successMessage: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Görünür Alanlar</label>
+      <div>
+        <label className="mb-1 block text-sm font-medium">Alıcı E-posta</label>
+        <input
+          type="email"
+          value={config.recipientEmail || ''}
+          onChange={(e) => onChange({ ...config, recipientEmail: e.target.value })}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          placeholder="info@bloomflora.com"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">Form gönderimlerinin iletileceği e-posta</p>
+      </div>
+
+      <div className="space-y-2 border-t pt-4">
+        <label className="block text-sm font-medium">Görünür Alanlar</label>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -295,23 +325,6 @@ function ContactFormV1Editor({
           />
           <span className="text-sm">Konu</span>
         </label>
-      </div>
-
-      <div>
-        <label className="text-sm font-medium">Form Düzeni</label>
-        <select
-          value={config.layout}
-          onChange={(e) =>
-            onChange({
-              ...config,
-              layout: e.target.value as ContactFormV1Config['layout'],
-            })
-          }
-          className="mt-1 w-full rounded-md border px-3 py-2"
-        >
-          <option value="stacked">Üst Üste</option>
-          <option value="inline">Yan Yana</option>
-        </select>
       </div>
     </div>
   );

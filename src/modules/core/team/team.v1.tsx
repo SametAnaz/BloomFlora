@@ -349,6 +349,59 @@ function TeamV1Editor({
                   onChange={(e) => updateMember(index, 'bio', e.target.value)}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
+                <input
+                  type="text"
+                  placeholder="Fotoğraf URL"
+                  value={member.image || ''}
+                  onChange={(e) => updateMember(index, 'image', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                {config.showSocial && (
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Instagram"
+                      value={member.social?.instagram || ''}
+                      onChange={(e) => {
+                        const newMembers = [...config.members];
+                        newMembers[index] = {
+                          ...newMembers[index],
+                          social: { ...newMembers[index].social, instagram: e.target.value },
+                        };
+                        onChange({ ...config, members: newMembers });
+                      }}
+                      className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Twitter"
+                      value={member.social?.twitter || ''}
+                      onChange={(e) => {
+                        const newMembers = [...config.members];
+                        newMembers[index] = {
+                          ...newMembers[index],
+                          social: { ...newMembers[index].social, twitter: e.target.value },
+                        };
+                        onChange({ ...config, members: newMembers });
+                      }}
+                      className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="LinkedIn"
+                      value={member.social?.linkedin || ''}
+                      onChange={(e) => {
+                        const newMembers = [...config.members];
+                        newMembers[index] = {
+                          ...newMembers[index],
+                          social: { ...newMembers[index].social, linkedin: e.target.value },
+                        };
+                        onChange({ ...config, members: newMembers });
+                      }}
+                      className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}

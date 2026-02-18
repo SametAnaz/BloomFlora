@@ -1,26 +1,11 @@
 /**
- * Home Page
- * Dynamic page rendered from Supabase blocks
+ * Default Homepage Blocks
+ * Shared between seed route, public page fallback, and admin page builder
  */
 
-import { PageRenderer, initializeModules } from '@/modules';
+import type { BlockConfig } from '@/lib/supabase/types';
 
-import { createClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/supabase/types';
-
-import type { BlockInstance } from '@/modules/types';
-
-// Force dynamic rendering (uses cookies for Supabase)
-export const dynamic = 'force-dynamic';
-
-type PageRow = Database['public']['Tables']['pages']['Row'];
-
-// Ensure modules are initialized
-initializeModules();
-
-// Sample blocks for demo (will be replaced with Supabase data)
-const demoBlocks: BlockInstance[] = [
-  // ─── HERO ───────────────────────────────────────
+export const defaultHomepageBlocks: BlockConfig[] = [
   {
     id: 'default-hero',
     type: 'hero.v1',
@@ -51,8 +36,6 @@ const demoBlocks: BlockInstance[] = [
       textColor: 'light',
     },
   },
-
-  // ─── ÖZELLİKLER / HİZMETLER ────────────────────
   {
     id: 'default-features',
     type: 'features.v1',
@@ -92,26 +75,19 @@ const demoBlocks: BlockInstance[] = [
       alignment: 'center',
     },
   },
-
-  // ─── HAKKIMIZDA RICH TEXT ───────────────────────
   {
     id: 'default-about',
     type: 'richText.v1',
     order: 2,
     enabled: true,
     config: {
-      content: `
-        <h2>Hakkımızda</h2>
-        <p>Bloom Flora olarak <strong>Rize'nin kalbinde</strong> 2010 yılından bu yana hizmet veriyoruz. Taze çiçekler, özenle hazırlanmış aranjmanlar, gelin buketleri ve dekoratif süs bitkileri sunuyoruz.</p>
-        <p>Her bir ürünümüz, sevdiklerinize olan sevginizi en güzel şekilde ifade etmeniz için <em>özenle seçilip hazırlanmaktadır</em>. Doğanın en güzel renklerini, en taze kokularıyla kapınıza getiriyoruz.</p>
-      `,
+      content:
+        '<h2>Hakkımızda</h2><p>Bloom Flora olarak <strong>Rize\'nin kalbinde</strong> 2010 yılından bu yana hizmet veriyoruz. Taze çiçekler, özenle hazırlanmış aranjmanlar, gelin buketleri ve dekoratif süs bitkileri sunuyoruz.</p><p>Her bir ürünümüz, sevdiklerinize olan sevginizi en güzel şekilde ifade etmeniz için <em>özenle seçilip hazırlanmaktadır</em>. Doğanın en güzel renklerini, en taze kokularıyla kapınıza getiriyoruz.</p>',
       maxWidth: 'lg',
       alignment: 'center',
       textSize: 'lg',
     },
   },
-
-  // ─── İSTATİSTİKLER ──────────────────────────────
   {
     id: 'default-stats',
     type: 'stats.v1',
@@ -131,8 +107,6 @@ const demoBlocks: BlockInstance[] = [
       background: 'primary',
     },
   },
-
-  // ─── AYIRICI ────────────────────────────────────
   {
     id: 'default-divider-1',
     type: 'divider.v1',
@@ -147,8 +121,6 @@ const demoBlocks: BlockInstance[] = [
       spacing: 'lg',
     },
   },
-
-  // ─── GALERİ ─────────────────────────────────────
   {
     id: 'default-gallery',
     type: 'imageGallery.v1',
@@ -188,8 +160,6 @@ const demoBlocks: BlockInstance[] = [
       lightbox: true,
     },
   },
-
-  // ─── MÜŞTERİ YORUMLARI ─────────────────────────
   {
     id: 'default-testimonials',
     type: 'testimonials.v1',
@@ -227,8 +197,6 @@ const demoBlocks: BlockInstance[] = [
       columns: '3',
     },
   },
-
-  // ─── CTA ────────────────────────────────────────
   {
     id: 'default-cta',
     type: 'cta.v1',
@@ -246,8 +214,6 @@ const demoBlocks: BlockInstance[] = [
       alignment: 'center',
     },
   },
-
-  // ─── SSS ────────────────────────────────────────
   {
     id: 'default-faq',
     type: 'faq.v1',
@@ -288,8 +254,6 @@ const demoBlocks: BlockInstance[] = [
       columns: '1',
     },
   },
-
-  // ─── İLETİŞİM FORMU ────────────────────────────
   {
     id: 'default-contact',
     type: 'contactForm.v1',
@@ -309,81 +273,3 @@ const demoBlocks: BlockInstance[] = [
     },
   },
 ];
-
-export default async function HomePage() {
-  // Try to fetch home page blocks from Supabase
-  let blocks: BlockInstance[] = demoBlocks;
-
-  try {
-    const supabase = await createClient();
-    let pageData: PageRow | null = null;
-    
-    // First try to get the home page - by is_homepage flag
-    const { data: homePage } = await supabase
-      .from('pages')
-      .select('*')
-      .eq('is_homepage', true)
-      .single();
-
-    if (homePage) {
-      pageData = homePage as PageRow;
-    } else {
-      // Fallback to common homepage slugs if no homepage flag set
-      const { data: slugPage } = await supabase
-        .from('pages')
-        .select('*')
-        .in('slug', ['home', 'anasayfa', 'ana-sayfa'])
-        .limit(1)
-        .single();
-      
-      if (slugPage) {
-        pageData = slugPage as PageRow;
-      }
-    }
-
-    // Auto-seed: If no homepage exists at all, create it with default blocks
-    if (!pageData) {
-      console.log('[HomePage] No homepage found — auto-seeding default content');
-      const { data: seeded, error: seedError } = await supabase
-        .from('pages')
-        .insert({
-          title: 'Ana Sayfa',
-          slug: 'anasayfa',
-          status: 'published',
-          is_homepage: true,
-          blocks: demoBlocks as unknown as PageRow['blocks'],
-          seo_title: 'Bloom Flora - Rize Çiçekçi | Taze Çiçek Teslimatı',
-          seo_description:
-            "Rize'nin en taze çiçekleri, özenle hazırlanmış aranjmanlar ve aynı gün teslimat.",
-        } as never)
-        .select('*')
-        .single();
-
-      if (!seedError && seeded) {
-        pageData = seeded as PageRow;
-        console.log('[HomePage] Auto-seeded homepage successfully');
-      } else {
-        console.error('[HomePage] Auto-seed failed:', seedError);
-      }
-    }
-    
-    console.log('[HomePage] Fetched page:', pageData?.slug, 'blocks count:', pageData?.blocks?.length);
-    
-    if (pageData) {
-      // Check if blocks exist and are valid
-      if (pageData.blocks && Array.isArray(pageData.blocks) && pageData.blocks.length > 0) {
-        blocks = pageData.blocks as BlockInstance[];
-        console.log('[HomePage] Using database blocks:', blocks.length);
-      } else {
-        console.log('[HomePage] No blocks in database, using demo');
-      }
-    } else {
-      console.log('[HomePage] No page found, using demo blocks');
-    }
-  } catch (err) {
-    console.error('[HomePage] Error fetching page:', err);
-    // Use demo blocks if fetch fails
-  }
-
-  return <PageRenderer blocks={blocks} />;
-}

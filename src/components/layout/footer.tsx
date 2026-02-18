@@ -84,13 +84,13 @@ export function Footer({
   copyrightYear = new Date().getFullYear(),
 }: FooterProps) {
   return (
-    <footer className="border-t border-border bg-muted/30">
+    <footer className="border-t border-[#6B2D3D] bg-[#4D1D2A] text-[#F5E6E8]">
       <div className="container-mobile py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold">{siteName}</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-[#C4959E]">
               Kaliteli ürünler ve profesyonel hizmet anlayışıyla sizlere en iyisini sunuyoruz.
             </p>
           </div>
@@ -103,7 +103,7 @@ export function Footer({
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm text-[#C4959E] transition-colors hover:text-[#F5E6E8]"
                   >
                     {link.label}
                   </Link>
@@ -115,14 +115,14 @@ export function Footer({
           {/* Contact Info */}
           <div className="space-y-4">
             <h4 className="font-semibold">İletişim</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-[#C4959E]">
               {phone ? <li>
-                  <a href={`tel:${phone.replace(/\s/g, '')}`} className="hover:text-foreground">
+                  <a href={`tel:${phone.replace(/\s/g, '')}`} className="hover:text-[#F5E6E8]">
                     {phone}
                   </a>
                 </li> : null}
               {email ? <li>
-                  <a href={`mailto:${email}`} className="hover:text-foreground">
+                  <a href={`mailto:${email}`} className="hover:text-[#F5E6E8]">
                     {email}
                   </a>
                 </li> : null}
@@ -141,7 +141,7 @@ export function Footer({
                     href={social.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-[#C4959E] transition-colors hover:text-[#F5E6E8]"
                     aria-label={`${social.platform} sayfamız`}
                   >
                     {socialIcons[social.platform]}
@@ -153,7 +153,7 @@ export function Footer({
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-8 border-t border-[#6B2D3D] pt-8 text-center text-sm text-[#C4959E]">
           <p>© {copyrightYear} {siteName}. Tüm hakları saklıdır.</p>
         </div>
       </div>

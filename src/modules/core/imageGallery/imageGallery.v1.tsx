@@ -183,19 +183,19 @@ function ImageGalleryV1Editor({
   return (
     <div className="space-y-4 p-4">
       <div>
-        <label className="text-sm font-medium">Başlık</label>
+        <label className="mb-1 block text-sm font-medium">Başlık</label>
         <input
           type="text"
           value={config.title || ''}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           placeholder="Galeri başlığı (opsiyonel)"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium">Sütun Sayısı</label>
+          <label className="mb-1 block text-sm font-medium">Sütun</label>
           <select
             value={config.columns}
             onChange={(e) =>
@@ -204,16 +204,16 @@ function ImageGalleryV1Editor({
                 columns: e.target.value as ImageGalleryV1Config['columns'],
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="2">2 Sütun</option>
-            <option value="3">3 Sütun</option>
-            <option value="4">4 Sütun</option>
-            <option value="5">5 Sütun</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium">En-Boy Oranı</label>
+          <label className="mb-1 block text-sm font-medium">Oran</label>
           <select
             value={config.aspectRatio}
             onChange={(e) =>
@@ -222,12 +222,29 @@ function ImageGalleryV1Editor({
                 aspectRatio: e.target.value as ImageGalleryV1Config['aspectRatio'],
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="square">Kare (1:1)</option>
+            <option value="square">Kare</option>
             <option value="4:3">4:3</option>
             <option value="16:9">16:9</option>
-            <option value="auto">Otomatik</option>
+            <option value="auto">Oto</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Boşluk</label>
+          <select
+            value={config.gap}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                gap: e.target.value as ImageGalleryV1Config['gap'],
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="sm">Küçük</option>
+            <option value="md">Orta</option>
+            <option value="lg">Büyük</option>
           </select>
         </div>
       </div>
@@ -243,36 +260,36 @@ function ImageGalleryV1Editor({
             + Ekle
           </button>
         </div>
-        <div className="max-h-64 space-y-2 overflow-y-auto">
+        <div className="max-h-72 space-y-2 overflow-y-auto">
           {config.images.map((image, index) => (
-            <div key={index} className="flex items-center gap-2 rounded border p-2">
-              <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="h-full w-full object-cover"
-                />
+            <div key={index} className="rounded-md border p-2">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Görsel {index + 1}</span>
+                <button
+                  onClick={() => removeImage(index)}
+                  className="rounded p-1 text-destructive hover:bg-destructive/10"
+                  type="button"
+                  aria-label="Görseli sil"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={image.alt}
-                  onChange={(e) => updateImage(index, { alt: e.target.value })}
-                  className="w-full rounded border px-2 py-1 text-sm"
-                  placeholder="Alt metin"
-                />
-              </div>
-              <button
-                onClick={() => removeImage(index)}
-                className="rounded p-1 text-destructive hover:bg-destructive/10"
-                type="button"
-                aria-label="Görseli sil"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <input
+                type="text"
+                value={image.src}
+                onChange={(e) => updateImage(index, { src: e.target.value })}
+                className="mb-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                placeholder="Görsel URL"
+              />
+              <input
+                type="text"
+                value={image.alt}
+                onChange={(e) => updateImage(index, { alt: e.target.value })}
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                placeholder="Alt metin"
+              />
             </div>
           ))}
         </div>

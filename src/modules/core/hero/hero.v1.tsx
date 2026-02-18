@@ -212,7 +212,7 @@ function HeroV1Render({
   );
 }
 
-// Editor component - placeholder for now
+// Editor component
 function HeroV1Editor({
   config,
   onChange,
@@ -223,40 +223,249 @@ function HeroV1Editor({
 }) {
   return (
     <div className="space-y-4 p-4">
+      {/* Başlık */}
       <div>
-        <label className="text-sm font-medium">Başlık</label>
+        <label className="mb-1 block text-sm font-medium">Başlık</label>
         <input
           type="text"
           value={config.title}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </div>
+
+      {/* Alt Başlık */}
       <div>
-        <label className="text-sm font-medium">Alt Başlık</label>
+        <label className="mb-1 block text-sm font-medium">Alt Başlık</label>
         <textarea
           value={config.subtitle || ''}
           onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           rows={3}
         />
       </div>
+
+      {/* Hizalama & Yükseklik */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium">Hizalama</label>
+          <select
+            value={config.alignment}
+            onChange={(e) =>
+              onChange({ ...config, alignment: e.target.value as 'left' | 'center' | 'right' })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="left">Sol</option>
+            <option value="center">Orta</option>
+            <option value="right">Sağ</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Yükseklik</label>
+          <select
+            value={config.height}
+            onChange={(e) =>
+              onChange({ ...config, height: e.target.value as HeroV1Config['height'] })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="auto">Otomatik</option>
+            <option value="small">Küçük</option>
+            <option value="medium">Orta</option>
+            <option value="large">Büyük</option>
+            <option value="fullscreen">Tam Ekran</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Metin Rengi */}
       <div>
-        <label className="text-sm font-medium">Hizalama</label>
+        <label className="mb-1 block text-sm font-medium">Metin Rengi</label>
         <select
-          value={config.alignment}
+          value={config.textColor}
           onChange={(e) =>
-            onChange({
-              ...config,
-              alignment: e.target.value as 'left' | 'center' | 'right',
-            })
+            onChange({ ...config, textColor: e.target.value as 'auto' | 'light' | 'dark' })
           }
-          className="mt-1 w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         >
-          <option value="left">Sol</option>
-          <option value="center">Orta</option>
-          <option value="right">Sağ</option>
+          <option value="auto">Otomatik</option>
+          <option value="light">Açık (Beyaz)</option>
+          <option value="dark">Koyu (Siyah)</option>
         </select>
+      </div>
+
+      {/* Arkaplan */}
+      <div className="border-t pt-4">
+        <label className="mb-2 block text-sm font-semibold">Arkaplan</label>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Tip</label>
+          <select
+            value={config.background.type}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                background: { ...config.background, type: e.target.value as 'none' | 'color' | 'image' | 'gradient' },
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="none">Yok</option>
+            <option value="color">Düz Renk</option>
+            <option value="gradient">Gradyan</option>
+            <option value="image">Görsel</option>
+          </select>
+        </div>
+
+        {config.background.type === 'color' && (
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium">Arkaplan Rengi</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={config.background.color || '#4D1D2A'}
+                onChange={(e) =>
+                  onChange({
+                    ...config,
+                    background: { ...config.background, color: e.target.value },
+                  })
+                }
+                className="h-10 w-12 cursor-pointer rounded border border-input"
+              />
+              <input
+                type="text"
+                value={config.background.color || ''}
+                onChange={(e) =>
+                  onChange({
+                    ...config,
+                    background: { ...config.background, color: e.target.value },
+                  })
+                }
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="#4D1D2A"
+              />
+            </div>
+          </div>
+        )}
+
+        {config.background.type === 'gradient' && (
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium">Gradyan CSS</label>
+            <input
+              type="text"
+              value={config.background.gradient || ''}
+              onChange={(e) =>
+                onChange({
+                  ...config,
+                  background: { ...config.background, gradient: e.target.value },
+                })
+              }
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              placeholder="linear-gradient(135deg, #4D1D2A 0%, #6B2D3D 100%)"
+            />
+          </div>
+        )}
+
+        {config.background.type === 'image' && (
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium">Görsel URL</label>
+            <input
+              type="text"
+              value={config.background.image?.src || ''}
+              onChange={(e) =>
+                onChange({
+                  ...config,
+                  background: { ...config.background, image: { src: e.target.value, alt: '' } },
+                })
+              }
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              placeholder="https://..."
+            />
+          </div>
+        )}
+
+        {config.background.type !== 'none' && (
+          <div className="mt-3">
+            <label className="mb-1 block text-sm font-medium">
+              Overlay Opaklığı: {config.background.overlayOpacity || 0}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={config.background.overlayOpacity || 0}
+              onChange={(e) =>
+                onChange({
+                  ...config,
+                  background: { ...config.background, overlayOpacity: Number(e.target.value) },
+                })
+              }
+              className="w-full"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Birincil CTA */}
+      <div className="border-t pt-4">
+        <label className="mb-2 block text-sm font-semibold">Birincil Buton</label>
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={config.primaryCta?.text || ''}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                primaryCta: { ...(config.primaryCta || { text: '', href: '' }), text: e.target.value },
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder="Buton metni"
+          />
+          <input
+            type="text"
+            value={config.primaryCta?.href || ''}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                primaryCta: { ...(config.primaryCta || { text: '', href: '' }), href: e.target.value },
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder="Link (ör: /urunler)"
+          />
+        </div>
+      </div>
+
+      {/* İkincil CTA */}
+      <div className="border-t pt-4">
+        <label className="mb-2 block text-sm font-semibold">İkincil Buton</label>
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={config.secondaryCta?.text || ''}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                secondaryCta: { ...(config.secondaryCta || { text: '', href: '' }), text: e.target.value },
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder="Buton metni"
+          />
+          <input
+            type="text"
+            value={config.secondaryCta?.href || ''}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                secondaryCta: { ...(config.secondaryCta || { text: '', href: '' }), href: e.target.value },
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder="Link (ör: #iletisim)"
+          />
+        </div>
       </div>
     </div>
   );

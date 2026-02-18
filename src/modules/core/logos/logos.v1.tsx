@@ -277,29 +277,41 @@ function LogosV1Editor({
           {config.logos.map((logo, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 rounded-md border p-2"
+              className="rounded-md border p-2"
             >
-              <input
-                type="text"
-                placeholder="Logo adı"
-                value={logo.name}
-                onChange={(e) => updateLogo(index, 'name', e.target.value)}
-                className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
-              />
-              <input
-                type="text"
-                placeholder="Link (opsiyonel)"
-                value={logo.link || ''}
-                onChange={(e) => updateLogo(index, 'link', e.target.value)}
-                className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => removeLogo(index)}
-                className="text-destructive"
-              >
-                ✗
-              </button>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">{logo.name || `Logo ${index + 1}`}</span>
+                <button
+                  type="button"
+                  onClick={() => removeLogo(index)}
+                  className="text-destructive"
+                >
+                  ✗
+                </button>
+              </div>
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  placeholder="Logo adı"
+                  value={logo.name}
+                  onChange={(e) => updateLogo(index, 'name', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Logo görsel URL"
+                  value={logo.image || ''}
+                  onChange={(e) => updateLogo(index, 'image', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Link (opsiyonel)"
+                  value={logo.link || ''}
+                  onChange={(e) => updateLogo(index, 'link', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                />
+              </div>
             </div>
           ))}
         </div>

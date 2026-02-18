@@ -9,9 +9,11 @@ import { useState, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { fromBlockConfig } from '@/lib/page-builder/types';
 import { toBlockConfig } from '@/lib/page-builder/types';
 import type { PageBlock, PageData } from '@/lib/page-builder/types';
 import { createClient } from '@/lib/supabase/client';
+import type { BlockConfig } from '@/lib/supabase/types';
 
 
 import { BlockCanvas } from './block-canvas';
@@ -76,6 +78,30 @@ export function PageBuilder({ initialPage }: PageBuilderProps) {
     }
     setHasChanges(true);
   }, [selectedBlockId]);
+
+  // Load default blocks from API
+  const handleLoadDefaults = useCallback(async () => {
+    try {
+      const res = await fetch('/api/seed/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: page.id }),
+      });
+      const data = await res.json();
+      if (data.success && data.blocks) {
+        const loadedBlocks: PageBlock[] = (data.blocks as BlockConfig[]).map(
+          (b: BlockConfig) => fromBlockConfig(b)
+        );
+        setBlocks(loadedBlocks);
+        setHasChanges(false);
+      } else {
+        alert('Varsayılan içerik yüklenirken hata: ' + (data.message || 'Bilinmeyen hata'));
+      }
+    } catch (err) {
+      console.error('Load defaults error:', err);
+      alert('Varsayılan içerik yüklenirken hata oluştu');
+    }
+  }, [page.id]);
 
   // Save page
   const handleSave = async () => {
@@ -220,6 +246,7 @@ export function PageBuilder({ initialPage }: PageBuilderProps) {
             onSelectBlock={setSelectedBlockId}
             onMoveBlock={handleMoveBlock}
             onDeleteBlock={handleDeleteBlock}
+            onLoadDefaults={handleLoadDefaults}
           />
         </div>
 

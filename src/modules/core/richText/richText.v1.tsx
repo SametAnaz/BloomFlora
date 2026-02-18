@@ -137,20 +137,20 @@ function RichTextV1Editor({
   return (
     <div className="space-y-4 p-4">
       <div>
-        <label className="text-sm font-medium">İçerik (HTML)</label>
+        <label className="mb-1 block text-sm font-medium">İçerik (HTML)</label>
         <textarea
           value={config.content}
           onChange={(e) => onChange({ ...config, content: e.target.value })}
-          className="mt-1 h-48 w-full rounded-md border px-3 py-2 font-mono text-sm"
+          className="h-48 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
           placeholder="<p>İçeriğinizi buraya yazın...</p>"
         />
         <p className="mt-1 text-xs text-muted-foreground">
           Not: İleride WYSIWYG editör eklenecektir.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium">Maksimum Genişlik</label>
+          <label className="mb-1 block text-sm font-medium">Genişlik</label>
           <select
             value={config.maxWidth}
             onChange={(e) =>
@@ -159,7 +159,7 @@ function RichTextV1Editor({
                 maxWidth: e.target.value as RichTextV1Config['maxWidth'],
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
             <option value="sm">Küçük</option>
             <option value="md">Orta</option>
@@ -169,7 +169,7 @@ function RichTextV1Editor({
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium">Hizalama</label>
+          <label className="mb-1 block text-sm font-medium">Hizalama</label>
           <select
             value={config.alignment}
             onChange={(e) =>
@@ -178,12 +178,29 @@ function RichTextV1Editor({
                 alignment: e.target.value as RichTextV1Config['alignment'],
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
             <option value="left">Sol</option>
             <option value="center">Orta</option>
             <option value="right">Sağ</option>
             <option value="justify">İki Yana</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Yazı Boyutu</label>
+          <select
+            value={config.textSize}
+            onChange={(e) =>
+              onChange({
+                ...config,
+                textSize: e.target.value as RichTextV1Config['textSize'],
+              })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="sm">Küçük</option>
+            <option value="base">Normal</option>
+            <option value="lg">Büyük</option>
           </select>
         </div>
       </div>

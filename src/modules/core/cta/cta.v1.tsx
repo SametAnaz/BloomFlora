@@ -234,6 +234,42 @@ function CtaV1Editor({
         </div>
       </div>
 
+      {/* Background Color - shown when style is solid */}
+      {config.style === 'solid' && (
+        <div>
+          <label className="mb-1 block text-sm font-medium">Arkaplan Rengi</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={config.backgroundColor || '#4D1D2A'}
+              onChange={(e) => onChange({ ...config, backgroundColor: e.target.value })}
+              className="h-10 w-12 cursor-pointer rounded border border-input"
+            />
+            <input
+              type="text"
+              value={config.backgroundColor || ''}
+              onChange={(e) => onChange({ ...config, backgroundColor: e.target.value })}
+              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              placeholder="#4D1D2A"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Background Image - shown when style is image */}
+      {config.style === 'image' && (
+        <div>
+          <label className="mb-1 block text-sm font-medium">Arkaplan Görseli URL</label>
+          <input
+            type="text"
+            value={config.backgroundImage || ''}
+            onChange={(e) => onChange({ ...config, backgroundImage: e.target.value })}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder="https://images.unsplash.com/..."
+          />
+        </div>
+      )}
+
       <div className="border-t pt-4">
         <p className="mb-2 text-sm font-medium">Birincil Buton</p>
         <div className="grid grid-cols-2 gap-4">

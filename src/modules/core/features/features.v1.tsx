@@ -167,6 +167,8 @@ function FeaturesV1Editor({
   config: FeaturesV1Config;
   onChange: (config: FeaturesV1Config) => void;
 }) {
+  const availableIcons = Object.keys(iconMap);
+
   const addFeature = () => {
     onChange({
       ...config,
@@ -216,9 +218,9 @@ function FeaturesV1Editor({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">Sütun Sayısı</label>
+          <label className="mb-1 block text-sm font-medium">Sütun</label>
           <select
             value={config.columns}
             onChange={(e) =>
@@ -226,9 +228,9 @@ function FeaturesV1Editor({
             }
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="2">2 Sütun</option>
-            <option value="3">3 Sütun</option>
-            <option value="4">4 Sütun</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
           </select>
         </div>
         <div>
@@ -242,6 +244,20 @@ function FeaturesV1Editor({
           >
             <option value="center">Ortalı</option>
             <option value="left">Sola</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">İkon Stili</label>
+          <select
+            value={config.iconStyle}
+            onChange={(e) =>
+              onChange({ ...config, iconStyle: e.target.value as 'circle' | 'square' | 'none' })
+            }
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="circle">Daire</option>
+            <option value="square">Kare</option>
+            <option value="none">Yok</option>
           </select>
         </div>
       </div>
@@ -270,6 +286,20 @@ function FeaturesV1Editor({
                 >
                   Sil
                 </button>
+              </div>
+              <div className="mb-2">
+                <label className="mb-1 block text-xs text-muted-foreground">İkon</label>
+                <select
+                  value={feature.icon}
+                  onChange={(e) => updateFeature(index, 'icon', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {availableIcons.map((icon) => (
+                    <option key={icon} value={icon}>
+                      {iconMap[icon]} {icon}
+                    </option>
+                  ))}
+                </select>
               </div>
               <input
                 type="text"

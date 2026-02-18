@@ -38,7 +38,7 @@ export function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b border-border bg-[#4D1D2A] text-[#F5E6E8] backdrop-blur">
       <div className="container-mobile">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -51,7 +51,7 @@ export function Header({
                 className="h-10 w-auto"
               />
             ) : (
-              <span className="text-xl font-bold text-primary">{siteName}</span>
+              <span className="text-xl font-bold text-[#D4919A]">{siteName}</span>
             )}
           </Link>
 
@@ -61,7 +61,7 @@ export function Header({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm font-medium text-[#C4959E] transition-colors hover:text-[#F5E6E8]"
               >
                 {item.label}
               </Link>
@@ -103,14 +103,14 @@ export function Header({
         </div>
 
         {/* Mobile Navigation */}
-        {isMenuOpen ? <nav className="border-t border-border py-4 md:hidden">
+        {isMenuOpen ? <nav className="border-t border-[#6B2D3D] py-4 md:hidden">
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className="block rounded-md px-3 py-2 text-base font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="block rounded-md px-3 py-2 text-base font-medium text-[#C4959E] transition-colors hover:bg-[#5E2A38] hover:text-[#F5E6E8]"
                   >
                     {item.label}
                   </Link>

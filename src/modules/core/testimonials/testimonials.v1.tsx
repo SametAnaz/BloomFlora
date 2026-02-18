@@ -379,11 +379,27 @@ function TestimonialsV1Editor({
                 onChange={(e) => updateTestimonial(index, 'name', e.target.value)}
                 className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
+              <div className="mb-2 grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Unvan"
+                  value={testimonial.role || ''}
+                  onChange={(e) => updateTestimonial(index, 'role', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <input
+                  type="text"
+                  placeholder="Şirket"
+                  value={testimonial.company || ''}
+                  onChange={(e) => updateTestimonial(index, 'company', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
               <input
                 type="text"
-                placeholder="Unvan"
-                value={testimonial.role || ''}
-                onChange={(e) => updateTestimonial(index, 'role', e.target.value)}
+                placeholder="Avatar URL"
+                value={testimonial.avatar || ''}
+                onChange={(e) => updateTestimonial(index, 'avatar', e.target.value)}
                 className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
               <textarea

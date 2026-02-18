@@ -19,6 +19,7 @@ interface BlockCanvasProps {
   onSelectBlock: (id: string) => void;
   onMoveBlock: (fromIndex: number, toIndex: number) => void;
   onDeleteBlock: (id: string) => void;
+  onLoadDefaults?: () => void;
 }
 
 // Convert PageBlock to BlockInstance for renderer
@@ -38,6 +39,7 @@ export function BlockCanvas({
   onSelectBlock,
   onMoveBlock,
   onDeleteBlock,
+  onLoadDefaults,
 }: BlockCanvasProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -84,6 +86,17 @@ export function BlockCanvas({
           </svg>
           <p className="mt-4 text-lg font-medium">Sayfa boş</p>
           <p className="text-sm">Sol panelden blok ekleyerek başlayın</p>
+          {onLoadDefaults && (
+            <button
+              onClick={onLoadDefaults}
+              className="mt-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Varsayılan İçeriği Yükle
+            </button>
+          )}
         </div>
       </div>
     );

@@ -7,6 +7,8 @@ import Link from 'next/link';
 
 import { createClient } from '@/lib/supabase/server';
 
+import { SeedButton } from './seed-button';
+
 // Force dynamic rendering (uses cookies for Supabase)
 export const dynamic = 'force-dynamic';
 
@@ -164,6 +166,18 @@ export default async function AdminDashboardPage() {
               <p className="text-xs text-muted-foreground">Renkleri özelleştir</p>
             </div>
           </Link>
+        </div>
+      </div>
+
+      {/* Seed Default Content */}
+      <div className="rounded-lg border bg-card p-6">
+        <h2 className="text-lg font-semibold">Varsayılan İçerik</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Henüz ana sayfa veya tema oluşturmadıysanız, çiçekçi temalı varsayılan içeriği tek tıkla yükleyebilirsiniz.
+          Yüklendikten sonra tüm bölümleri, başlıkları ve sıralamayı Sayfalar bölümünden düzenleyebilirsiniz.
+        </p>
+        <div className="mt-4">
+          <SeedButton />
         </div>
       </div>
     </div>

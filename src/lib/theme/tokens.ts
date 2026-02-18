@@ -41,39 +41,39 @@ export interface ThemeTokens {
 // =====================================================
 
 export const defaultColors: ThemeColors = {
-  // Primary - Main brand color
-  primary: '#18181b',
-  primaryForeground: '#fafafa',
-  // Secondary
-  secondary: '#f4f4f5',
-  secondaryForeground: '#18181b',
-  // Background & Foreground
-  background: '#ffffff',
-  foreground: '#09090b',
-  // Muted
-  muted: '#f4f4f5',
-  mutedForeground: '#71717a',
-  // Accent
-  accent: '#f4f4f5',
-  accentForeground: '#18181b',
+  // Primary - Rose pink on dark burgundy
+  primary: '#D4919A',
+  primaryForeground: '#2A0F17',
+  // Secondary - Mid burgundy
+  secondary: '#5E2A38',
+  secondaryForeground: '#F2D4D7',
+  // Background & Foreground - Dark wine
+  background: '#2A1118',
+  foreground: '#F5E6E8',
+  // Muted - Core burgundy (#4D1D2A)
+  muted: '#4D1D2A',
+  mutedForeground: '#C4959E',
+  // Accent - Deep rose
+  accent: '#6B2D3D',
+  accentForeground: '#F5E6E8',
   // Destructive
-  destructive: '#ef4444',
+  destructive: '#F87171',
   // Borders & Input
-  border: '#e4e4e7',
-  input: '#e4e4e7',
-  ring: '#a1a1aa',
-  // Card
-  card: '#ffffff',
-  cardForeground: '#09090b',
+  border: '#6B2D3D',
+  input: '#5E2A38',
+  ring: '#D4919A',
+  // Card - Darker burgundy
+  card: '#3D1925',
+  cardForeground: '#F5E6E8',
   // Popover
-  popover: '#ffffff',
-  popoverForeground: '#09090b',
+  popover: '#3D1925',
+  popoverForeground: '#F5E6E8',
 };
 
 export const defaultThemeTokens: ThemeTokens = {
   colors: defaultColors,
-  radius: '0.5rem',
-  shadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  radius: '0.75rem',
+  shadow: '0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06)',
 };
 
 // =====================================================
