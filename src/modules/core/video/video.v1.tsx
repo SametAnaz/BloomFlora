@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -32,6 +32,8 @@ export const videoV1ConfigSchema = z.object({
   aspectRatio: z.enum(['16:9', '4:3', '21:9', '1:1']).default('16:9'),
   /** Max width */
   maxWidth: z.enum(['sm', 'md', 'lg', 'full']).default('lg'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type VideoV1Config = z.infer<typeof videoV1ConfigSchema>;
@@ -50,6 +52,7 @@ export const videoV1DefaultConfig: VideoV1Config = {
   muted: false,
   aspectRatio: '16:9',
   maxWidth: 'lg',
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -125,9 +128,16 @@ function VideoV1Render({
     full: 'max-w-full',
   };
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <section className="py-16 px-4 md:px-8">
-      <div className={`mx-auto ${maxWidths[config.maxWidth]}`}>
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className={`relative z-10 mx-auto ${maxWidths[config.maxWidth]}`}>
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-8 text-center">
@@ -178,6 +188,12 @@ function VideoV1Editor({
 }) {
   return (
     <div className="space-y-4">
+      {/* Background */}
+      <VideoBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       <div>
         <label className="mb-1 block text-sm font-medium">Başlık</label>
         <input
@@ -298,6 +314,12 @@ function VideoV1Editor({
       </div>
     </div>
   );
+}
+
+/** Background picker wrapper */
+function VideoBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="video" />;
 }
 
 // =====================================================

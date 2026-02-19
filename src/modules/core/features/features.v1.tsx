@@ -6,6 +6,7 @@
 import { z } from 'zod';
 
 import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -30,6 +31,10 @@ export const featuresV1ConfigSchema = z.object({
   iconStyle: z.enum(['circle', 'square', 'none']).default('circle'),
   /** Text alignment */
   alignment: z.enum(['left', 'center']).default('center'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
+  /** Card style */
+  cardStyle: z.enum(['flat', 'bordered', 'shadow']).default('flat'),
 });
 
 export type FeaturesV1Config = z.infer<typeof featuresV1ConfigSchema>;
@@ -61,6 +66,8 @@ export const featuresV1DefaultConfig: FeaturesV1Config = {
   columns: '3',
   iconStyle: 'circle',
   alignment: 'center',
+  background: { type: 'none' },
+  cardStyle: 'flat',
 };
 
 // =====================================================
@@ -78,21 +85,88 @@ export const featuresV1Meta = {
 };
 
 // =====================================================
-// Render Component
+// Icon Map
 // =====================================================
 
 const iconMap: Record<string, string> = {
-  Zap: '⚡',
-  Shield: '🛡️',
-  HeadphonesIcon: '🎧',
+  // General
   Star: '⭐',
   Heart: '❤️',
   Check: '✓',
-  Clock: '🕐',
-  Gift: '🎁',
-  Truck: '🚚',
   Award: '🏆',
+  Zap: '⚡',
+  Target: '🎯',
+  Flag: '🚩',
+  Bookmark: '🔖',
+  // Commerce
+  Truck: '🚚',
+  Gift: '🎁',
+  ShoppingBag: '🛍️',
+  CreditCard: '💳',
+  Tag: '🏷️',
+  Package: '📦',
+  // Communication
+  HeadphonesIcon: '🎧',
+  Phone: '📞',
+  Mail: '📧',
+  MessageCircle: '💬',
+  Bell: '🔔',
+  // Flora
+  Flower: '🌸',
+  Leaf: '🍃',
+  TreePine: '🌲',
+  Sun: '☀️',
+  Droplets: '💧',
+  Sprout: '🌱',
+  // Security
+  Shield: '🛡️',
+  Lock: '🔒',
+  Eye: '👁️',
+  Key: '🔑',
+  // Time
+  Clock: '🕐',
+  Calendar: '📅',
+  Timer: '⏱️',
+  // Technology
+  Globe: '🌐',
+  Wifi: '📶',
+  Monitor: '🖥️',
+  Smartphone: '📱',
+  Camera: '📷',
+  // Business
+  Users: '👥',
+  Building: '🏢',
+  Briefcase: '💼',
+  ChartBar: '📊',
+  TrendingUp: '📈',
+  // Misc
+  Sparkles: '✨',
+  ThumbsUp: '👍',
+  Smile: '😊',
+  Coffee: '☕',
+  Music: '🎵',
+  Palette: '🎨',
+  Compass: '🧭',
+  Map: '🗺️',
+  Rocket: '🚀',
 };
+
+// Group icons by category for better UX  
+const iconCategories = [
+  { label: '— Genel —', icons: ['Star', 'Heart', 'Check', 'Award', 'Zap', 'Target', 'Flag', 'Bookmark'] },
+  { label: '— Ticaret —', icons: ['Truck', 'Gift', 'ShoppingBag', 'CreditCard', 'Tag', 'Package'] },
+  { label: '— İletişim —', icons: ['HeadphonesIcon', 'Phone', 'Mail', 'MessageCircle', 'Bell'] },
+  { label: '— Flora —', icons: ['Flower', 'Leaf', 'TreePine', 'Sun', 'Droplets', 'Sprout'] },
+  { label: '— Güvenlik —', icons: ['Shield', 'Lock', 'Eye', 'Key'] },
+  { label: '— Zaman —', icons: ['Clock', 'Calendar', 'Timer'] },
+  { label: '— Teknoloji —', icons: ['Globe', 'Wifi', 'Monitor', 'Smartphone', 'Camera'] },
+  { label: '— İş —', icons: ['Users', 'Building', 'Briefcase', 'ChartBar', 'TrendingUp'] },
+  { label: '— Diğer —', icons: ['Sparkles', 'ThumbsUp', 'Smile', 'Coffee', 'Music', 'Palette', 'Compass', 'Map', 'Rocket'] },
+];
+
+// =====================================================
+// Render Component
+// =====================================================
 
 function FeaturesV1Render({
   block,
@@ -108,9 +182,18 @@ function FeaturesV1Render({
     '4': 'md:grid-cols-2 lg:grid-cols-4',
   };
 
+  const bgStyle = (() => {
+    const { getBackgroundStyle } = require('../../shared/background-picker') as { getBackgroundStyle: typeof import('../../shared/background-picker').getBackgroundStyle };
+    return getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  })();
+  const hasBgOverlay = typeof config.background === 'object' && (config.background as import('../../shared/background-picker').BackgroundConfig).overlayOpacity;
+
   return (
-    <section className="py-16 px-4 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {hasBgOverlay ? (
+        <div className="absolute inset-0 bg-black" style={{ opacity: ((config.background as import('../../shared/background-picker').BackgroundConfig).overlayOpacity ?? 0) / 100 }} />
+      ) : null}
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className={`mb-12 ${config.alignment === 'center' ? 'text-center' : ''}`}>
@@ -128,7 +211,10 @@ function FeaturesV1Render({
           {config.features.map((feature, index) => (
             <div
               key={index}
-              className={`${config.alignment === 'center' ? 'text-center' : ''}`}
+              className={`${config.alignment === 'center' ? 'text-center' : ''} ${
+                config.cardStyle === 'bordered' ? 'rounded-xl border bg-card p-6' :
+                config.cardStyle === 'shadow' ? 'rounded-xl bg-card p-6 shadow-md' : ''
+              }`}
             >
               {/* Icon */}
               {config.iconStyle !== 'none' && (
@@ -167,8 +253,6 @@ function FeaturesV1Editor({
   config: FeaturesV1Config;
   onChange: (config: FeaturesV1Config) => void;
 }) {
-  const availableIcons = Object.keys(iconMap);
-
   const addFeature = () => {
     onChange({
       ...config,
@@ -196,131 +280,156 @@ function FeaturesV1Editor({
     onChange({ ...config, features: newFeatures });
   };
 
+  const moveFeature = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= config.features.length) return;
+    const newFeatures = [...config.features];
+    [newFeatures[index], newFeatures[newIndex]] = [newFeatures[newIndex], newFeatures[index]];
+    onChange({ ...config, features: newFeatures });
+  };
+
+  const inputCls = 'w-full rounded-md border border-input bg-background px-3 py-2 text-sm';
+  const labelCls = 'mb-1 block text-sm font-medium';
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <div>
-        <label className="mb-1 block text-sm font-medium">Başlık</label>
+        <label className={labelCls}>Başlık</label>
         <input
           type="text"
           value={config.title || ''}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className={inputCls}
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium">Alt Başlık</label>
+        <label className={labelCls}>Alt Başlık</label>
         <input
           type="text"
           value={config.subtitle || ''}
           onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className={inputCls}
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-sm font-medium">Sütun</label>
-          <select
-            value={config.columns}
-            onChange={(e) =>
-              onChange({ ...config, columns: e.target.value as '2' | '3' | '4' })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
+          <label className={labelCls}>Sütun</label>
+          <select value={config.columns} onChange={(e) => onChange({ ...config, columns: e.target.value as '2' | '3' | '4' })} className={inputCls}>
+            <option value="2">2 Sütun</option>
+            <option value="3">3 Sütun</option>
+            <option value="4">4 Sütun</option>
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Hizalama</label>
-          <select
-            value={config.alignment}
-            onChange={(e) =>
-              onChange({ ...config, alignment: e.target.value as 'left' | 'center' })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
+          <label className={labelCls}>Hizalama</label>
+          <select value={config.alignment} onChange={(e) => onChange({ ...config, alignment: e.target.value as 'left' | 'center' })} className={inputCls}>
             <option value="center">Ortalı</option>
             <option value="left">Sola</option>
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">İkon Stili</label>
-          <select
-            value={config.iconStyle}
-            onChange={(e) =>
-              onChange({ ...config, iconStyle: e.target.value as 'circle' | 'square' | 'none' })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
+          <label className={labelCls}>İkon Stili</label>
+          <select value={config.iconStyle} onChange={(e) => onChange({ ...config, iconStyle: e.target.value as 'circle' | 'square' | 'none' })} className={inputCls}>
             <option value="circle">Daire</option>
             <option value="square">Kare</option>
             <option value="none">Yok</option>
           </select>
         </div>
+        <div>
+          <label className={labelCls}>Kart Stili</label>
+          <select value={config.cardStyle} onChange={(e) => onChange({ ...config, cardStyle: e.target.value as 'flat' | 'bordered' | 'shadow' })} className={inputCls}>
+            <option value="flat">Düz</option>
+            <option value="bordered">Kenarlıklı</option>
+            <option value="shadow">Gölgeli</option>
+          </select>
+        </div>
       </div>
 
+      {/* Background Picker */}
+      <FeaturesBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg) => onChange({ ...config, background: bg as FeaturesV1Config['background'] })}
+      />
+
       {/* Features List */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium">Özellikler</label>
+      <div className="border-t pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <label className="text-sm font-semibold">Özellikler ({config.features.length})</label>
           <button
             type="button"
             onClick={addFeature}
-            className="text-sm text-primary hover:underline"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
-            + Ekle
+            + Yeni Özellik
           </button>
         </div>
         <div className="space-y-3">
           {config.features.map((feature, index) => (
-            <div key={index} className="rounded-md border p-3">
+            <div key={index} className="rounded-lg border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium">Özellik {index + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => removeFeature(index)}
-                  className="text-sm text-destructive hover:underline"
-                >
-                  Sil
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{iconMap[feature.icon] || '✦'}</span>
+                  <span className="text-sm font-medium">{feature.title}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => moveFeature(index, 'up')} disabled={index === 0} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Yukarı">↑</button>
+                  <button type="button" onClick={() => moveFeature(index, 'down')} disabled={index === config.features.length - 1} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Aşağı">↓</button>
+                  <button type="button" onClick={() => removeFeature(index)} className="rounded p-1 text-destructive hover:bg-destructive/10" title="Sil">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
               </div>
-              <div className="mb-2">
-                <label className="mb-1 block text-xs text-muted-foreground">İkon</label>
-                <select
-                  value={feature.icon}
-                  onChange={(e) => updateFeature(index, 'icon', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {availableIcons.map((icon) => (
-                    <option key={icon} value={icon}>
-                      {iconMap[icon]} {icon}
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-2">
+                <div>
+                  <label className="mb-0.5 block text-xs text-muted-foreground">İkon</label>
+                  <select
+                    value={feature.icon}
+                    onChange={(e) => updateFeature(index, 'icon', e.target.value)}
+                    className={inputCls}
+                  >
+                    {iconCategories.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.icons.map((icon) => (
+                          <option key={icon} value={icon}>
+                            {iconMap[icon]} {icon}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Başlık"
+                  value={feature.title}
+                  onChange={(e) => updateFeature(index, 'title', e.target.value)}
+                  className={inputCls}
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={feature.description || ''}
+                  onChange={(e) => updateFeature(index, 'description', e.target.value)}
+                  className={inputCls}
+                  rows={2}
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Başlık"
-                value={feature.title}
-                onChange={(e) => updateFeature(index, 'title', e.target.value)}
-                className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-              <input
-                type="text"
-                placeholder="Açıklama"
-                value={feature.description || ''}
-                onChange={(e) => updateFeature(index, 'description', e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
             </div>
           ))}
         </div>
       </div>
     </div>
   );
+}
+
+// =====================================================
+// Background Picker Wrapper
+// =====================================================
+
+function FeaturesBackgroundPicker({ value, onChange }: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as { BackgroundPicker: typeof import('../../shared/background-picker').BackgroundPicker };
+  return <BackgroundPicker value={value} onChange={onChange} imageFolder="features" />;
 }
 
 // =====================================================

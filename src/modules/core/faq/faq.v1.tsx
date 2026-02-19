@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -29,6 +29,8 @@ export const faqV1ConfigSchema = z.object({
   allowMultiple: z.boolean().default(false),
   /** Columns for grid layout */
   columns: z.enum(['1', '2']).default('1'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type FaqV1Config = z.infer<typeof faqV1ConfigSchema>;
@@ -65,6 +67,7 @@ export const faqV1DefaultConfig: FaqV1Config = {
   layout: 'accordion',
   allowMultiple: false,
   columns: '1',
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -131,9 +134,16 @@ function FaqV1Render({
   // For SSR/preview, show all expanded
   const allOpen = true;
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <section className="py-16 px-4 md:px-8">
-      <div className="mx-auto max-w-4xl">
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 mx-auto max-w-4xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
@@ -281,6 +291,12 @@ function FaqV1Editor({
         </div>
       </div>
 
+      {/* Background */}
+      <FaqBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       {/* FAQ Items */}
       <div>
         <div className="mb-2 flex items-center justify-between">
@@ -326,6 +342,12 @@ function FaqV1Editor({
       </div>
     </div>
   );
+}
+
+/** Background picker wrapper */
+function FaqBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="faq" />;
 }
 
 // =====================================================

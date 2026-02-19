@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -37,6 +37,8 @@ export const pricingV1ConfigSchema = z.object({
   plans: z.array(pricingPlanSchema).default([]),
   /** Layout style */
   columns: z.enum(['2', '3', '4']).default('3'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type PricingV1Config = z.infer<typeof pricingV1ConfigSchema>;
@@ -94,6 +96,7 @@ export const pricingV1DefaultConfig: PricingV1Config = {
     },
   ],
   columns: '3',
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -128,9 +131,16 @@ function PricingV1Render({
     '4': 'md:grid-cols-2 lg:grid-cols-4',
   };
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <section className="py-16 px-4 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
@@ -328,6 +338,12 @@ function PricingV1Editor({
         </select>
       </div>
 
+      {/* Background */}
+      <PricingBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       {/* Plans List */}
       <div>
         <div className="mb-2 flex items-center justify-between">
@@ -437,6 +453,12 @@ function PricingV1Editor({
       </div>
     </div>
   );
+}
+
+/** Background picker wrapper */
+function PricingBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="pricing" />;
 }
 
 // =====================================================

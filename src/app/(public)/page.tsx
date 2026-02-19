@@ -31,16 +31,12 @@ const demoBlocks: BlockInstance[] = [
       subtitle:
         "Rize'nin en taze çiçekleri ve özenle hazırlanmış aranjmanları ile özel günlerinizi unutulmaz kılın.",
       alignment: 'center',
-      primaryCta: {
-        text: 'Ürünleri Keşfet',
-        href: '/urunler',
-        variant: 'primary',
-      },
-      secondaryCta: {
-        text: 'İletişime Geç',
-        href: '#iletisim',
-        variant: 'outline',
-      },
+      titleStyle: { fontSize: '5xl', fontWeight: 'bold' },
+      subtitleStyle: { fontSize: 'xl', fontWeight: 'normal' },
+      buttons: [
+        { id: 'btn-1', text: 'Ürünleri Keşfet', href: '/urunler', variant: 'primary' },
+        { id: 'btn-2', text: 'İletişime Geç', href: '#iletisim', variant: 'outline' },
+      ],
       background: {
         type: 'gradient',
         gradient:

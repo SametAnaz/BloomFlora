@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -38,6 +38,8 @@ export const teamV1ConfigSchema = z.object({
   cardStyle: z.enum(['simple', 'detailed', 'minimal']).default('simple'),
   /** Show social links */
   showSocial: z.boolean().default(true),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type TeamV1Config = z.infer<typeof teamV1ConfigSchema>;
@@ -78,6 +80,7 @@ export const teamV1DefaultConfig: TeamV1Config = {
   columns: '4',
   cardStyle: 'simple',
   showSocial: true,
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -112,9 +115,16 @@ function TeamV1Render({
     '4': 'sm:grid-cols-2 lg:grid-cols-4',
   };
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <section className="py-16 px-4 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
@@ -302,59 +312,75 @@ function TeamV1Editor({
         <span className="text-sm">Sosyal Medya Linklerini Göster</span>
       </label>
 
+      {/* Background */}
+      <TeamBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       {/* Members List */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium">Ekip Üyeleri</label>
+      <div className="border-t pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <label className="text-sm font-semibold">Ekip Üyeleri ({config.members.length})</label>
           <button
             type="button"
             onClick={addMember}
-            className="text-sm text-primary hover:underline"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
-            + Ekle
+            + Üye Ekle
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="max-h-[500px] space-y-3 overflow-y-auto pr-1">
           {config.members.map((member, index) => (
-            <div key={index} className="rounded-md border p-3">
+            <div key={index} className="rounded-lg border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium">{member.name}</span>
-                <button
-                  type="button"
-                  onClick={() => removeMember(index)}
-                  className="text-sm text-destructive hover:underline"
-                >
-                  Sil
-                </button>
+                <span className="text-xs font-medium text-muted-foreground">{member.name || `Üye ${index + 1}`}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => { const ni = index - 1; if (ni < 0) return; const m = [...config.members]; [m[index], m[ni]] = [m[ni], m[index]]; onChange({ ...config, members: m }); }} disabled={index === 0} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Yukarı">↑</button>
+                  <button type="button" onClick={() => { const ni = index + 1; if (ni >= config.members.length) return; const m = [...config.members]; [m[index], m[ni]] = [m[ni], m[index]]; onChange({ ...config, members: m }); }} disabled={index === config.members.length - 1} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Aşağı">↓</button>
+                  <button
+                    type="button"
+                    onClick={() => removeMember(index)}
+                    className="rounded p-1 text-destructive hover:bg-destructive/10"
+                    aria-label="Üyeyi sil"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
+
+              {/* Photo Upload */}
+              <div className="mb-2">
+                <label className="mb-1 block text-xs text-muted-foreground">Fotoğraf</label>
+                <TeamMemberPhotoUpload
+                  value={member.image || ''}
+                  onChange={(url) => updateMember(index, 'image', url)}
+                />
+              </div>
+
               <div className="space-y-2">
                 <input
                   type="text"
                   placeholder="İsim"
                   value={member.name}
                   onChange={(e) => updateMember(index, 'name', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                 />
                 <input
                   type="text"
                   placeholder="Pozisyon"
                   value={member.role || ''}
                   onChange={(e) => updateMember(index, 'role', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                 />
-                <input
-                  type="text"
+                <textarea
                   placeholder="Kısa biyografi"
                   value={member.bio || ''}
                   onChange={(e) => updateMember(index, 'bio', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-                <input
-                  type="text"
-                  placeholder="Fotoğraf URL"
-                  value={member.image || ''}
-                  onChange={(e) => updateMember(index, 'image', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                  rows={2}
                 />
                 {config.showSocial && (
                   <div className="grid grid-cols-3 gap-2">
@@ -408,6 +434,27 @@ function TeamV1Editor({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Background picker wrapper */
+function TeamBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="team" />;
+}
+
+/** Photo upload wrapper using shared ImageUploadField */
+function TeamMemberPhotoUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { ImageUploadField } = require('../../shared/image-upload-field') as { ImageUploadField: typeof import('../../shared/image-upload-field').ImageUploadField };
+  return (
+    <ImageUploadField
+      value={value || undefined}
+      onChange={onChange}
+      folder="team"
+      compact={true}
+      showUrlInput={true}
+      previewClass="h-16 w-16 rounded-full object-cover"
+    />
   );
 }
 

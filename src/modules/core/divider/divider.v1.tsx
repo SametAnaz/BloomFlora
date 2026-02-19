@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -26,6 +26,8 @@ export const dividerV1ConfigSchema = z.object({
   customColor: z.string().optional(),
   /** Vertical spacing */
   spacing: z.enum(['sm', 'md', 'lg', 'xl']).default('md'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type DividerV1Config = z.infer<typeof dividerV1ConfigSchema>;
@@ -40,6 +42,7 @@ export const dividerV1DefaultConfig: DividerV1Config = {
   width: 'full',
   color: 'muted',
   spacing: 'md',
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -104,9 +107,16 @@ function DividerV1Render({
       ? { backgroundColor: config.customColor }
       : {};
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <div className={`${spacingClasses[config.spacing]} px-4`}>
-      <div className="mx-auto flex max-w-6xl items-center justify-center">
+    <div className={`relative ${spacingClasses[config.spacing]} px-4`} style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-center">
         {config.style === 'icon' ? (
           <div className="flex items-center gap-4">
             <div
@@ -284,8 +294,20 @@ function DividerV1Editor({
           />
         </div>
       )}
+
+      {/* Background */}
+      <DividerBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
     </div>
   );
+}
+
+/** Background picker wrapper */
+function DividerBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="divider" />;
 }
 
 // =====================================================

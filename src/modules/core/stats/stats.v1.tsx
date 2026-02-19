@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -30,7 +30,7 @@ export const statsV1ConfigSchema = z.object({
   /** Style variant */
   variant: z.enum(['default', 'cards', 'minimal']).default('default'),
   /** Background */
-  background: z.enum(['transparent', 'muted', 'primary']).default('transparent'),
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type StatsV1Config = z.infer<typeof statsV1ConfigSchema>;
@@ -50,7 +50,7 @@ export const statsV1DefaultConfig: StatsV1Config = {
   ],
   layout: 'row',
   variant: 'default',
-  background: 'transparent',
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -79,15 +79,16 @@ function StatsV1Render({
 }) {
   const { config } = block;
 
-  const bgClasses: Record<string, string> = {
-    transparent: '',
-    muted: 'bg-muted/50',
-    primary: 'bg-primary text-primary-foreground',
-  };
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
 
   return (
-    <section className={`py-16 px-4 md:px-8 ${bgClasses[config.background]}`}>
-      <div className="mx-auto max-w-6xl">
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
@@ -95,13 +96,7 @@ function StatsV1Render({
               <h2 className="text-3xl font-bold md:text-4xl">{config.title}</h2>
             )}
             {config.subtitle && (
-              <p
-                className={`mt-3 text-lg ${
-                  config.background === 'primary'
-                    ? 'text-primary-foreground/80'
-                    : 'text-muted-foreground'
-                }`}
-              >
+              <p className="mt-3 text-lg text-muted-foreground">
                 {config.subtitle}
               </p>
             )}
@@ -126,20 +121,14 @@ function StatsV1Render({
               }`}
             >
               <div
-                className={`text-4xl font-bold md:text-5xl ${
-                  config.background !== 'primary' ? 'text-primary' : ''
-                }`}
+                className={`text-4xl font-bold md:text-5xl text-primary`}
               >
                 {stat.prefix}
                 {stat.value}
                 {stat.suffix}
               </div>
               <div
-                className={`mt-2 text-sm font-medium ${
-                  config.background === 'primary'
-                    ? 'text-primary-foreground/80'
-                    : 'text-muted-foreground'
-                }`}
+                className="mt-2 text-sm font-medium text-muted-foreground"
               >
                 {stat.label}
               </div>
@@ -198,7 +187,7 @@ function StatsV1Editor({
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-1 block text-sm font-medium">Düzen</label>
           <select
@@ -229,24 +218,13 @@ function StatsV1Editor({
             <option value="minimal">Minimal</option>
           </select>
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Arkaplan</label>
-          <select
-            value={config.background}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                background: e.target.value as 'transparent' | 'muted' | 'primary',
-              })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="transparent">Şeffaf</option>
-            <option value="muted">Gri</option>
-            <option value="primary">Birincil</option>
-          </select>
-        </div>
       </div>
+
+      {/* Background */}
+      <StatsBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
 
       {/* Stats List */}
       <div>
@@ -309,6 +287,12 @@ function StatsV1Editor({
       </div>
     </div>
   );
+}
+
+/** Background picker wrapper */
+function StatsBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="stats" />;
 }
 
 // =====================================================

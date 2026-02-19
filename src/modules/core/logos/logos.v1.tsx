@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -30,6 +30,8 @@ export const logosV1ConfigSchema = z.object({
   style: z.enum(['simple', 'bordered', 'carousel']).default('simple'),
   /** Grayscale filter */
   grayscale: z.boolean().default(true),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type LogosV1Config = z.infer<typeof logosV1ConfigSchema>;
@@ -51,6 +53,7 @@ export const logosV1DefaultConfig: LogosV1Config = {
   columns: '5',
   style: 'simple',
   grayscale: true,
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -123,9 +126,16 @@ function LogosV1Render({
     return content;
   };
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <section className="py-12 px-4 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative py-12 px-4 md:px-8" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-10 text-center">
@@ -261,55 +271,68 @@ function LogosV1Editor({
         <span className="text-sm">Gri Tonlama (Hover&apos;da renkli)</span>
       </label>
 
+      {/* Background */}
+      <LogosBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       {/* Logos List */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium">Logolar</label>
+      <div className="border-t pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <label className="text-sm font-semibold">Logolar ({config.logos.length})</label>
           <button
             type="button"
             onClick={addLogo}
-            className="text-sm text-primary hover:underline"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
-            + Ekle
+            + Logo Ekle
           </button>
         </div>
-        <div className="space-y-2">
+        <div className="max-h-[500px] space-y-3 overflow-y-auto pr-1">
           {config.logos.map((logo, index) => (
             <div
               key={index}
-              className="rounded-md border p-2"
+              className="rounded-lg border p-3"
             >
-              <div className="mb-1 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">{logo.name || `Logo ${index + 1}`}</span>
-                <button
-                  type="button"
-                  onClick={() => removeLogo(index)}
-                  className="text-destructive"
-                >
-                  ✗
-                </button>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => { const ni = index - 1; if (ni < 0) return; const l = [...config.logos]; [l[index], l[ni]] = [l[ni], l[index]]; onChange({ ...config, logos: l }); }} disabled={index === 0} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Yukarı">↑</button>
+                  <button type="button" onClick={() => { const ni = index + 1; if (ni >= config.logos.length) return; const l = [...config.logos]; [l[index], l[ni]] = [l[ni], l[index]]; onChange({ ...config, logos: l }); }} disabled={index === config.logos.length - 1} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Aşağı">↓</button>
+                  <button
+                    type="button"
+                    onClick={() => removeLogo(index)}
+                    className="rounded p-1 text-destructive hover:bg-destructive/10"
+                    aria-label="Logoyu sil"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <input
                   type="text"
                   placeholder="Logo adı"
                   value={logo.name}
                   onChange={(e) => updateLogo(index, 'name', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
                 />
-                <input
-                  type="text"
-                  placeholder="Logo görsel URL"
+
+                {/* Logo Image Upload */}
+                <LogoImageUpload
                   value={logo.image || ''}
-                  onChange={(e) => updateLogo(index, 'image', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  onChange={(url) => updateLogo(index, 'image', url)}
                 />
+
                 <input
                   type="text"
                   placeholder="Link (opsiyonel)"
                   value={logo.link || ''}
                   onChange={(e) => updateLogo(index, 'link', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
                 />
               </div>
             </div>
@@ -317,6 +340,27 @@ function LogosV1Editor({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Background picker wrapper */
+function LogosBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="logos" />;
+}
+
+/** Logo image upload wrapper using shared ImageUploadField */
+function LogoImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { ImageUploadField } = require('../../shared/image-upload-field') as { ImageUploadField: typeof import('../../shared/image-upload-field').ImageUploadField };
+  return (
+    <ImageUploadField
+      value={value || undefined}
+      onChange={onChange}
+      folder="logos"
+      compact={true}
+      showUrlInput={true}
+      previewClass="h-12 max-w-full object-contain"
+    />
   );
 }
 

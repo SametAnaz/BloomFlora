@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import type { ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -35,6 +35,8 @@ export const testimonialsV1ConfigSchema = z.object({
   showAvatar: z.boolean().default(true),
   /** Grid columns (for grid layout) */
   columns: z.enum(['2', '3']).default('3'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type TestimonialsV1Config = z.infer<typeof testimonialsV1ConfigSchema>;
@@ -73,6 +75,7 @@ export const testimonialsV1DefaultConfig: TestimonialsV1Config = {
   showRating: true,
   showAvatar: true,
   columns: '3',
+  background: { type: 'none' },
 };
 
 // =====================================================
@@ -176,9 +179,16 @@ function TestimonialsV1Render({
     '3': 'md:grid-cols-3',
   };
 
+  const bgStyle = (() => {
+    const { getBackgroundStyle } = require('../../shared/background-picker') as { getBackgroundStyle: typeof import('../../shared/background-picker').getBackgroundStyle };
+    return getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  })();
+  const bgOverlay = typeof config.background === 'object' && (config.background as import('../../shared/background-picker').BackgroundConfig).overlayOpacity;
+
   return (
-    <section className="bg-muted/30 py-16 px-4 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
+      {bgOverlay ? <div className="absolute inset-0 bg-black" style={{ opacity: ((config.background as import('../../shared/background-picker').BackgroundConfig).overlayOpacity ?? 0) / 100 }} /> : null}
+      <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
@@ -273,15 +283,25 @@ function TestimonialsV1Editor({
     onChange({ ...config, testimonials: newTestimonials });
   };
 
+  const moveTestimonial = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= config.testimonials.length) return;
+    const newTestimonials = [...config.testimonials];
+    [newTestimonials[index], newTestimonials[newIndex]] = [newTestimonials[newIndex], newTestimonials[index]];
+    onChange({ ...config, testimonials: newTestimonials });
+  };
+
+  const inputCls = 'w-full rounded-md border border-input bg-background px-3 py-2 text-sm';
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <div>
         <label className="mb-1 block text-sm font-medium">Başlık</label>
         <input
           type="text"
           value={config.title || ''}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className={inputCls}
         />
       </div>
 
@@ -291,7 +311,7 @@ function TestimonialsV1Editor({
           type="text"
           value={config.subtitle || ''}
           onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className={inputCls}
         />
       </div>
 
@@ -306,7 +326,7 @@ function TestimonialsV1Editor({
                 layout: e.target.value as 'grid' | 'carousel' | 'single',
               })
             }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className={inputCls}
           >
             <option value="grid">Grid</option>
             <option value="carousel">Carousel</option>
@@ -320,7 +340,7 @@ function TestimonialsV1Editor({
             onChange={(e) =>
               onChange({ ...config, columns: e.target.value as '2' | '3' })
             }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className={inputCls}
           >
             <option value="2">2 Sütun</option>
             <option value="3">3 Sütun</option>
@@ -334,6 +354,7 @@ function TestimonialsV1Editor({
             type="checkbox"
             checked={config.showRating}
             onChange={(e) => onChange({ ...config, showRating: e.target.checked })}
+            className="rounded"
           />
           <span className="text-sm">Yıldızları Göster</span>
         </label>
@@ -342,42 +363,57 @@ function TestimonialsV1Editor({
             type="checkbox"
             checked={config.showAvatar}
             onChange={(e) => onChange({ ...config, showAvatar: e.target.checked })}
+            className="rounded"
           />
           <span className="text-sm">Avatarları Göster</span>
         </label>
       </div>
 
+      {/* Background */}
+      <TestimonialsBackgroundPicker
+        value={(config.background || { type: 'none' }) as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg) => onChange({ ...config, background: bg as TestimonialsV1Config['background'] })}
+      />
+
       {/* Testimonials List */}
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium">Yorumlar</label>
+      <div className="border-t pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <label className="text-sm font-semibold">Yorumlar ({config.testimonials.length})</label>
           <button
             type="button"
             onClick={addTestimonial}
-            className="text-sm text-primary hover:underline"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
-            + Ekle
+            + Yorum Ekle
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="max-h-[500px] space-y-3 overflow-y-auto pr-1">
           {config.testimonials.map((testimonial, index) => (
-            <div key={index} className="rounded-md border p-3">
+            <div key={index} className="rounded-lg border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium">Yorum {index + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => removeTestimonial(index)}
-                  className="text-sm text-destructive hover:underline"
-                >
-                  Sil
-                </button>
+                <span className="text-xs font-medium text-muted-foreground">Yorum {index + 1}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => moveTestimonial(index, 'up')} disabled={index === 0} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Yukarı">↑</button>
+                  <button type="button" onClick={() => moveTestimonial(index, 'down')} disabled={index === config.testimonials.length - 1} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Aşağı">↓</button>
+                  <button
+                    type="button"
+                    onClick={() => removeTestimonial(index)}
+                    className="rounded p-1 text-destructive hover:bg-destructive/10"
+                    aria-label="Yorumu sil"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
+
               <input
                 type="text"
                 placeholder="İsim"
                 value={testimonial.name}
                 onChange={(e) => updateTestimonial(index, 'name', e.target.value)}
-                className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mb-2 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
               />
               <div className="mb-2 grid grid-cols-2 gap-2">
                 <input
@@ -385,33 +421,39 @@ function TestimonialsV1Editor({
                   placeholder="Unvan"
                   value={testimonial.role || ''}
                   onChange={(e) => updateTestimonial(index, 'role', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                 />
                 <input
                   type="text"
                   placeholder="Şirket"
                   value={testimonial.company || ''}
                   onChange={(e) => updateTestimonial(index, 'company', e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                 />
               </div>
-              <input
-                type="text"
-                placeholder="Avatar URL"
-                value={testimonial.avatar || ''}
-                onChange={(e) => updateTestimonial(index, 'avatar', e.target.value)}
-                className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
+
+              {/* Avatar Upload */}
+              <div className="mb-2">
+                <label className="mb-1 block text-xs text-muted-foreground">Avatar</label>
+                <TestimonialAvatarUpload
+                  value={testimonial.avatar || ''}
+                  onChange={(url) => updateTestimonial(index, 'avatar', url)}
+                />
+              </div>
+
               <textarea
                 placeholder="Yorum içeriği"
                 value={testimonial.content}
                 onChange={(e) => updateTestimonial(index, 'content', e.target.value)}
-                className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mb-2 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                 rows={3}
               />
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">
-                  Puan: {testimonial.rating || 5}
+                <label className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  Puan:
+                  <span className="font-semibold text-yellow-500">
+                    {'★'.repeat(testimonial.rating || 5)}{'☆'.repeat(5 - (testimonial.rating || 5))}
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -430,6 +472,27 @@ function TestimonialsV1Editor({
       </div>
     </div>
   );
+}
+
+/** Avatar upload wrapper using shared ImageUploadField */
+function TestimonialAvatarUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { ImageUploadField } = require('../../shared/image-upload-field') as { ImageUploadField: typeof import('../../shared/image-upload-field').ImageUploadField };
+  return (
+    <ImageUploadField
+      value={value || undefined}
+      onChange={onChange}
+      folder="testimonials"
+      compact={true}
+      showUrlInput={true}
+      previewClass="h-12 w-12 rounded-full object-cover"
+    />
+  );
+}
+
+/** Background picker wrapper */
+function TestimonialsBackgroundPicker({ value, onChange }: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as { BackgroundPicker: typeof import('../../shared/background-picker').BackgroundPicker };
+  return <BackgroundPicker value={value} onChange={onChange} imageFolder="testimonials" />;
 }
 
 // =====================================================

@@ -6,6 +6,7 @@
 import { z } from 'zod';
 
 import {
+  backgroundConfigSchema,
   imageRefSchema,
   spacingConfigSchema,
   type ImageRef,
@@ -31,6 +32,8 @@ export const imageGalleryV1ConfigSchema = z.object({
   lightbox: z.boolean().default(true),
   /** Spacing */
   spacing: spacingConfigSchema.default({}),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type ImageGalleryV1Config = z.infer<typeof imageGalleryV1ConfigSchema>;
@@ -57,6 +60,7 @@ export const imageGalleryV1DefaultConfig: ImageGalleryV1Config = {
     paddingTop: 'lg',
     paddingBottom: 'lg',
   },
+  background: { type: 'none' },
 };
 
 // =====================================================
@@ -105,9 +109,16 @@ function ImageGalleryV1Render({
 }) {
   const { config } = block;
 
+  const bgStyle = (() => {
+    const { getBackgroundStyle } = require('../../shared/background-picker') as { getBackgroundStyle: typeof import('../../shared/background-picker').getBackgroundStyle };
+    return getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  })();
+  const bgOverlay = typeof config.background === 'object' && (config.background as import('../../shared/background-picker').BackgroundConfig).overlayOpacity;
+
   return (
-    <section className="py-12 md:py-16">
-      <div className="container-mobile">
+    <section className="relative py-12 md:py-16" style={bgStyle}>
+      {bgOverlay ? <div className="absolute inset-0 bg-black" style={{ opacity: ((config.background as import('../../shared/background-picker').BackgroundConfig).overlayOpacity ?? 0) / 100 }} /> : null}
+      <div className="relative z-10 container-mobile">
         {config.title ? <h2 className="mb-8 text-2xl font-bold md:text-3xl">{config.title}</h2> : null}
 
         <div
@@ -180,6 +191,16 @@ function ImageGalleryV1Editor({
     onChange({ ...config, images: newImages });
   };
 
+  const moveImage = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= config.images.length) return;
+    const newImages = [...config.images];
+    [newImages[index], newImages[newIndex]] = [newImages[newIndex], newImages[index]];
+    onChange({ ...config, images: newImages });
+  };
+
+  const inputCls = 'w-full rounded-md border border-input bg-background px-3 py-2 text-sm';
+
   return (
     <div className="space-y-4 p-4">
       <div>
@@ -188,7 +209,7 @@ function ImageGalleryV1Editor({
           type="text"
           value={config.title || ''}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className={inputCls}
           placeholder="Galeri başlığı (opsiyonel)"
         />
       </div>
@@ -198,13 +219,8 @@ function ImageGalleryV1Editor({
           <label className="mb-1 block text-sm font-medium">Sütun</label>
           <select
             value={config.columns}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                columns: e.target.value as ImageGalleryV1Config['columns'],
-              })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            onChange={(e) => onChange({ ...config, columns: e.target.value as ImageGalleryV1Config['columns'] })}
+            className={inputCls}
           >
             <option value="2">2</option>
             <option value="3">3</option>
@@ -216,13 +232,8 @@ function ImageGalleryV1Editor({
           <label className="mb-1 block text-sm font-medium">Oran</label>
           <select
             value={config.aspectRatio}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                aspectRatio: e.target.value as ImageGalleryV1Config['aspectRatio'],
-              })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            onChange={(e) => onChange({ ...config, aspectRatio: e.target.value as ImageGalleryV1Config['aspectRatio'] })}
+            className={inputCls}
           >
             <option value="square">Kare</option>
             <option value="4:3">4:3</option>
@@ -234,64 +245,13 @@ function ImageGalleryV1Editor({
           <label className="mb-1 block text-sm font-medium">Boşluk</label>
           <select
             value={config.gap}
-            onChange={(e) =>
-              onChange({
-                ...config,
-                gap: e.target.value as ImageGalleryV1Config['gap'],
-              })
-            }
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            onChange={(e) => onChange({ ...config, gap: e.target.value as ImageGalleryV1Config['gap'] })}
+            className={inputCls}
           >
             <option value="sm">Küçük</option>
             <option value="md">Orta</option>
             <option value="lg">Büyük</option>
           </select>
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium">Görseller</label>
-          <button
-            onClick={addImage}
-            className="rounded bg-primary px-3 py-1 text-xs text-primary-foreground"
-            type="button"
-          >
-            + Ekle
-          </button>
-        </div>
-        <div className="max-h-72 space-y-2 overflow-y-auto">
-          {config.images.map((image, index) => (
-            <div key={index} className="rounded-md border p-2">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Görsel {index + 1}</span>
-                <button
-                  onClick={() => removeImage(index)}
-                  className="rounded p-1 text-destructive hover:bg-destructive/10"
-                  type="button"
-                  aria-label="Görseli sil"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <input
-                type="text"
-                value={image.src}
-                onChange={(e) => updateImage(index, { src: e.target.value })}
-                className="mb-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                placeholder="Görsel URL"
-              />
-              <input
-                type="text"
-                value={image.alt}
-                onChange={(e) => updateImage(index, { alt: e.target.value })}
-                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                placeholder="Alt metin"
-              />
-            </div>
-          ))}
         </div>
       </div>
 
@@ -304,8 +264,88 @@ function ImageGalleryV1Editor({
         />
         <span className="text-sm">Lightbox aktif</span>
       </label>
+
+      {/* Background */}
+      <GalleryBackgroundPicker
+        value={(config.background || { type: 'none' }) as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg) => onChange({ ...config, background: bg as ImageGalleryV1Config['background'] })}
+      />
+
+      {/* Images */}
+      <div className="border-t pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <label className="text-sm font-semibold">Görseller ({config.images.length})</label>
+          <button
+            onClick={addImage}
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            type="button"
+          >
+            + Görsel Ekle
+          </button>
+        </div>
+        <div className="max-h-[500px] space-y-3 overflow-y-auto pr-1">
+          {config.images.map((image, index) => (
+            <div key={index} className="rounded-lg border p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Görsel {index + 1}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => moveImage(index, 'up')} disabled={index === 0} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Yukarı">↑</button>
+                  <button type="button" onClick={() => moveImage(index, 'down')} disabled={index === config.images.length - 1} className="rounded p-1 text-muted-foreground hover:bg-accent disabled:opacity-30" title="Aşağı">↓</button>
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="rounded p-1 text-destructive hover:bg-destructive/10"
+                    type="button"
+                    aria-label="Görseli sil"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Image Upload Field */}
+              <GalleryImageUpload
+                value={image.src}
+                onChange={(url) => updateImage(index, { src: url })}
+              />
+
+              <input
+                type="text"
+                value={image.alt}
+                onChange={(e) => updateImage(index, { alt: e.target.value })}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                placeholder="Alt metin"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
+}
+
+/**
+ * Inline image upload for gallery items
+ * Uses dynamic import to avoid 'use client' on the module file
+ */
+function GalleryImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { ImageUploadField } = require('../../shared/image-upload-field') as { ImageUploadField: typeof import('../../shared/image-upload-field').ImageUploadField };
+  return (
+    <ImageUploadField
+      value={value !== '/placeholder.jpg' && value !== '/placeholder-1.jpg' && value !== '/placeholder-2.jpg' && value !== '/placeholder-3.jpg' && value !== '/placeholder-4.jpg' && value !== '/placeholder-5.jpg' && value !== '/placeholder-6.jpg' ? value : undefined}
+      onChange={onChange}
+      folder="gallery"
+      showUrlInput={true}
+      compact={true}
+      previewClass="h-24 w-full object-cover"
+    />
+  );
+}
+
+function GalleryBackgroundPicker({ value, onChange }: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as { BackgroundPicker: typeof import('../../shared/background-picker').BackgroundPicker };
+  return <BackgroundPicker value={value} onChange={onChange} imageFolder="gallery" />;
 }
 
 // =====================================================

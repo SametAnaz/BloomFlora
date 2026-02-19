@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { spacingConfigSchema, type ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, spacingConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -22,6 +22,8 @@ export const richTextV1ConfigSchema = z.object({
   spacing: spacingConfigSchema.default({}),
   /** Typography size */
   textSize: z.enum(['sm', 'base', 'lg']).default('base'),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type RichTextV1Config = z.infer<typeof richTextV1ConfigSchema>;
@@ -43,6 +45,7 @@ export const richTextV1DefaultConfig: RichTextV1Config = {
     paddingBottom: 'lg',
   },
   textSize: 'base',
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -96,11 +99,19 @@ function RichTextV1Render({
   const paddingTop = config.spacing?.paddingTop || 'md';
   const paddingBottom = config.spacing?.paddingBottom || 'md';
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
     <section
-      className={`${spacingClasses[paddingTop].split(' ')[0]} ${spacingClasses[paddingBottom].split(' ')[1] || spacingClasses[paddingBottom].split(' ')[0]}`}
+      className={`relative ${spacingClasses[paddingTop].split(' ')[0]} ${spacingClasses[paddingBottom].split(' ')[1] || spacingClasses[paddingBottom].split(' ')[0]}`}
+      style={bgStyle}
     >
-      <div className="container-mobile">
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 container-mobile">
         <div
           className={`
             ${maxWidthClasses[config.maxWidth]}
@@ -136,6 +147,12 @@ function RichTextV1Editor({
 }) {
   return (
     <div className="space-y-4 p-4">
+      {/* Background */}
+      <RichTextBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       <div>
         <label className="mb-1 block text-sm font-medium">İçerik (HTML)</label>
         <textarea
@@ -206,6 +223,12 @@ function RichTextV1Editor({
       </div>
     </div>
   );
+}
+
+/** Background picker wrapper */
+function RichTextBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="richtext" />;
 }
 
 // =====================================================

@@ -7,7 +7,7 @@ import * as React from 'react';
 
 import { z } from 'zod';
 
-import { spacingConfigSchema, type ModuleDefinition } from '../../types';
+import { backgroundConfigSchema, spacingConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
 // Config Schema
@@ -34,6 +34,8 @@ export const contactFormV1ConfigSchema = z.object({
   recipientEmail: z.string().email().optional(),
   /** Spacing */
   spacing: spacingConfigSchema.default({}),
+  /** Background */
+  background: backgroundConfigSchema.default({ type: 'none' }),
 });
 
 export type ContactFormV1Config = z.infer<typeof contactFormV1ConfigSchema>;
@@ -55,6 +57,7 @@ export const contactFormV1DefaultConfig: ContactFormV1Config = {
     paddingTop: 'lg',
     paddingBottom: 'lg',
   },
+  background: { type: 'none' as const },
 };
 
 // =====================================================
@@ -95,9 +98,16 @@ function ContactFormV1Render({
     setSubmitStatus('success');
   };
 
+  const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
+  const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
+
   return (
-    <section className="py-12 md:py-16" id="contact">
-      <div className="container-mobile">
+    <section className="relative py-12 md:py-16" id="contact" style={bgStyle}>
+      {showOverlay && (
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: ((config.background as Record<string, unknown>)?.overlayOpacity as number ?? 40) / 100 }} />
+      )}
+      <div className="relative z-10 container-mobile">
         <div className="mx-auto max-w-2xl">
           {/* Status Messages */}
           {submitStatus === 'success' ? (
@@ -225,6 +235,12 @@ function ContactFormV1Editor({
 }) {
   return (
     <div className="space-y-4 p-4">
+      {/* Background */}
+      <ContactFormBackgroundPicker
+        value={config.background as import('../../shared/background-picker').BackgroundConfig}
+        onChange={(bg: import('../../shared/background-picker').BackgroundConfig) => onChange({ ...config, background: bg })}
+      />
+
       <div>
         <label className="mb-1 block text-sm font-medium">Başlık</label>
         <input
@@ -328,6 +344,12 @@ function ContactFormV1Editor({
       </div>
     </div>
   );
+}
+
+/** Background picker wrapper */
+function ContactFormBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
+  const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
+  return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="contact" />;
 }
 
 // =====================================================
