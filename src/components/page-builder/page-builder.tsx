@@ -113,8 +113,7 @@ export function PageBuilder({ initialPage }: PageBuilderProps) {
         slug: page.slug,
         status: page.status,
         blocks: blocks.map(toBlockConfig),
-        seo_title: page.seo_title,
-        seo_description: page.seo_description,
+        seo: page.seo || {},
         updated_at: new Date().toISOString(),
       };
       
@@ -165,6 +164,15 @@ export function PageBuilder({ initialPage }: PageBuilderProps) {
       .update(statusUpdate as never)
       .eq('id', page.id);
   };
+
+  // Clear all blocks
+  const handleClearBlocks = useCallback(() => {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm('Tüm bloklar silinecek. Emin misiniz?')) return;
+    setBlocks([]);
+    setSelectedBlockId(null);
+    setHasChanges(true);
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
@@ -219,6 +227,17 @@ export function PageBuilder({ initialPage }: PageBuilderProps) {
           >
             {page.status === 'published' ? 'Yayından Kaldır' : 'Yayınla'}
           </button>
+
+          {/* Clear All Blocks Button */}
+          {blocks.length > 0 ? (
+            <button
+              onClick={handleClearBlocks}
+              className="rounded-md border border-destructive/30 px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+              title="Tüm blokları temizle"
+            >
+              Temizle
+            </button>
+          ) : null}
 
           {/* Save Button */}
           <button

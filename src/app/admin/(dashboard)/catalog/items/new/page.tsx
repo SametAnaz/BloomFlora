@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ImageField } from '@/components/admin/image-field';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 
@@ -30,6 +31,7 @@ export default function NewItemPage() {
   const [categoryId, setCategoryId] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
   
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export default function NewItemPage() {
         .from('items')
         .select('id')
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         setError('Bu URL zaten kullanılıyor');
@@ -102,22 +104,34 @@ export default function NewItemPage() {
         slug,
         description: description || null,
         price: price ? Number(price) : null,
+        image_url: imageUrl || null,
         category_id: categoryId || null,
         is_active: isActive,
         is_featured: isFeatured,
       };
 
-      const { error: createError } = await supabase
-        .from('items')
-        .insert(insertData as never);
+      console.log('[items/new] Inserting:', JSON.stringify(insertData));
 
-      if (createError) throw createError;
+      const { data: insertedData, error: createError } = await supabase
+        .from('items')
+        .insert(insertData as never)
+        .select();
+
+      console.log('[items/new] Result:', { insertedData, createError });
+
+      if (createError) {
+        const msg = createError.message || createError.details || JSON.stringify(createError);
+        setError(`Hata: ${msg}`);
+        setIsCreating(false);
+        return;
+      }
 
       router.push('/admin/catalog/items');
       router.refresh();
-    } catch (err) {
-      console.error('Create error:', err);
-      setError('Ürün oluşturulurken hata oluştu');
+    } catch (err: unknown) {
+      const e = err as { message?: string; details?: string; code?: string };
+      console.error('Create error:', JSON.stringify(err), e.message, e.details, e.code);
+      setError(`Ürün oluşturulurken hata: ${e.message || JSON.stringify(err)}`);
       setIsCreating(false);
     }
   };
@@ -210,6 +224,13 @@ export default function NewItemPage() {
             placeholder="Ürün açıklaması (opsiyonel)"
           />
         </div>
+
+        <ImageField
+          label="Ürün Görseli"
+          value={imageUrl}
+          onChange={setImageUrl}
+          placeholder="Ürün görseli seçin veya yükleyin"
+        />
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">

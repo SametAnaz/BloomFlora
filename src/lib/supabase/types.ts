@@ -84,9 +84,6 @@ export interface Database {
           slug: string;
           title: string;
           status: 'draft' | 'published';
-          is_homepage: boolean;
-          seo_title: string | null;
-          seo_description: string | null;
           seo: SeoConfig;
           blocks: BlockConfig[];
           created_at: string;
@@ -98,9 +95,6 @@ export interface Database {
           slug: string;
           title: string;
           status?: 'draft' | 'published';
-          is_homepage?: boolean;
-          seo_title?: string | null;
-          seo_description?: string | null;
           seo?: SeoConfig;
           blocks?: BlockConfig[];
           created_at?: string;
@@ -112,9 +106,6 @@ export interface Database {
           slug?: string;
           title?: string;
           status?: 'draft' | 'published';
-          is_homepage?: boolean;
-          seo_title?: string | null;
-          seo_description?: string | null;
           seo?: SeoConfig;
           blocks?: BlockConfig[];
           created_at?: string;

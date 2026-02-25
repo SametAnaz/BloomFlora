@@ -39,15 +39,14 @@ export default async function PageEditorPage({ params }: PageEditorPageProps) {
   const pageRow = page as unknown as PageRow;
 
   // Transform database page to PageData
+  const seoData = pageRow.seo as { title?: string; description?: string } | null;
   const pageData: PageData = {
     id: pageRow.id,
     title: pageRow.title,
     slug: pageRow.slug,
     status: pageRow.status,
     blocks: (pageRow.blocks || []).map((b: BlockConfig) => fromBlockConfig(b)),
-    seo_title: pageRow.seo_title ?? undefined,
-    seo_description: pageRow.seo_description ?? undefined,
-    is_homepage: pageRow.is_homepage,
+    seo: seoData ? { title: seoData.title, description: seoData.description } : undefined,
   };
 
   return <PageBuilder initialPage={pageData} />;

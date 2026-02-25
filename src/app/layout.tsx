@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeStyleInjector } from "@/components/theme-style-injector";
+import { getSiteSettings } from "@/lib/settings/getSiteSettings";
 
 import type { Metadata } from "next";
 
@@ -72,23 +73,31 @@ export const metadata: Metadata = {
   category: 'çiçekçilik',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getSiteSettings();
+
+  // Build sameAs array from social links
+  const sameAs: string[] = [];
+  if (settings.social_instagram) sameAs.push(settings.social_instagram);
+  if (settings.social_facebook) sameAs.push(settings.social_facebook);
+  if (settings.social_twitter) sameAs.push(settings.social_twitter);
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Florist',
-    name: 'Bloom Flora',
+    name: settings.site_name || 'Bloom Flora',
     image: 'https://bloomflora.com/circle-logo.png',
     '@id': 'https://bloomflora.com',
     url: 'https://bloomflora.com',
-    telephone: '+90-XXX-XXX-XXXX',
+    telephone: settings.contact_phone || '',
     priceRange: '$$',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'Müftü Mahallesi, Stadyum Sokak No: 32/A',
+      streetAddress: settings.contact_address || '',
       addressLocality: 'Merkez',
       addressRegion: 'Rize',
       postalCode: '53020',
@@ -112,15 +121,13 @@ export default function RootLayout({
       opens: '09:00',
       closes: '19:00',
     },
-    sameAs: [
-      'https://www.instagram.com/p/DT0xmZFjCdf/',
-    ],
-    description: 'Rize\'de çiçekçilik ve süs eşyaları konusunda uzman. Taze çiçekler, bitki bakımı, dekoratif süs eşyaları, hediyelik eşya ve özel günler için çiçek aranjmanları sunuyoruz. Hediye paketleme ve özel hediye seçenekleri ile sevdiklerinizi mutlu edin.',
+    sameAs,
+    description: settings.seo_description || settings.site_description || 'Rize\'de çiçekçilik ve süs eşyaları konusunda uzman.',
     areaServed: {
       '@type': 'City',
       name: 'Rize',
     },
-    email: 'bloomflorarize@gmail.com',
+    email: settings.contact_email || '',
     paymentAccepted: 'Cash, Credit Card',
     currenciesAccepted: 'TRY',
   };

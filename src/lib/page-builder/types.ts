@@ -46,7 +46,5 @@ export interface PageData {
   slug: string;
   status: 'draft' | 'published';
   blocks: PageBlock[];
-  seo_title?: string;
-  seo_description?: string;
-  is_homepage: boolean;
+  seo?: { title?: string; description?: string };
 }

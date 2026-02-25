@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+import { ImageField } from '@/components/admin/image-field';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 
@@ -97,7 +98,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
         .select('id')
         .eq('slug', slug)
         .neq('id', item.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         setError('Bu URL başka bir ürün tarafından kullanılıyor');
@@ -247,29 +248,12 @@ export default function EditItemPage({ params }: EditItemPageProps) {
           />
         </div>
 
-        <div>
-          <label htmlFor="imageUrl" className="mb-1 block text-sm font-medium">
-            Görsel URL
-          </label>
-          <input
-            id="imageUrl"
-            type="text"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            placeholder="https://..."
-          />
-          {imageUrl ? (
-            <div className="relative mt-2 h-32 w-32 rounded overflow-hidden">
-              <Image
-                src={imageUrl}
-                alt="Preview"
-                fill
-                className="object-cover"
-              />
-            </div>
-          ) : null}
-        </div>
+        <ImageField
+          label="Ürün Görseli"
+          value={imageUrl}
+          onChange={setImageUrl}
+          placeholder="Ürün görseli seçin veya yükleyin"
+        />
 
         <div>
           <label htmlFor="description" className="mb-1 block text-sm font-medium">

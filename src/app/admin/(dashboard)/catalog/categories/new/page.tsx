@@ -9,6 +9,7 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ImageField } from '@/components/admin/image-field';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 
@@ -22,6 +23,7 @@ export default function NewCategoryPage() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function NewCategoryPage() {
         .from('categories')
         .select('id')
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         setError('Bu URL zaten kullanılıyor');
@@ -88,6 +90,7 @@ export default function NewCategoryPage() {
         name,
         slug,
         description: description || null,
+        image_url: imageUrl || null,
         is_active: isActive,
         order: nextOrder,
       };
@@ -161,6 +164,13 @@ export default function NewCategoryPage() {
             placeholder="Kategori açıklaması (opsiyonel)"
           />
         </div>
+
+        <ImageField
+          label="Kategori Görseli"
+          value={imageUrl}
+          onChange={setImageUrl}
+          placeholder="Kategori görseli seçin veya yükleyin"
+        />
 
         <div className="flex items-center gap-2">
           <input

@@ -72,7 +72,7 @@ export default async function PagesListPage() {
                 <tr key={page.id} className="hover:bg-accent/50">
                   <td className="px-6 py-4">
                     <div className="font-medium">{page.title}</div>
-                    {page.is_homepage ? (
+                    {page.slug === 'anasayfa' ? (
                       <span className="inline-block mt-1 rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
                         Ana Sayfa
                       </span>

@@ -9,6 +9,7 @@ import { WhatsAppFloat } from '@/components/ui/whatsapp-float';
 
 import { initializeModules } from '@/modules';
 
+import { getSiteSettings } from '@/lib/settings/getSiteSettings';
 import { ThemeProvider } from '@/lib/theme';
 import { getActiveTheme } from '@/lib/theme/getTheme';
 
@@ -23,35 +24,25 @@ interface PublicLayoutProps {
 }
 
 export default async function PublicLayout({ children }: PublicLayoutProps) {
-  // Fetch active theme from Supabase
-  const theme = await getActiveTheme();
+  // Fetch active theme and site settings from Supabase in parallel
+  const [theme, settings] = await Promise.all([
+    getActiveTheme(),
+    getSiteSettings(),
+  ]);
 
-  // TODO: Fetch site settings from Supabase
-  const siteSettings = {
-    siteName: 'Bloom Flora',
-    logoUrl: '/circle-logo.png',
-    whatsapp: {
-      enabled: true,
-      phoneNumber: '905551234567', // Replace with actual number
-      message: 'Merhaba, bilgi almak istiyorum.',
-    },
-    contact: {
-      email: 'bloomflorarize@gmail.com',
-      phone: '+90 555 123 45 67',
-      address: 'Müftü Mahallesi, Stadyum Sokak No: 32/A, Rize',
-    },
-    social: [
-      { platform: 'instagram' as const, url: 'https://instagram.com/bloomflora' },
-    ],
-  };
+  // Build social links array from settings
+  const socialLinks: { platform: 'instagram' | 'facebook' | 'twitter'; url: string }[] = [];
+  if (settings.social_instagram) socialLinks.push({ platform: 'instagram', url: settings.social_instagram });
+  if (settings.social_facebook) socialLinks.push({ platform: 'facebook', url: settings.social_facebook });
+  if (settings.social_twitter) socialLinks.push({ platform: 'twitter', url: settings.social_twitter });
 
   return (
     <ThemeProvider initialTheme={theme}>
       <div className="flex min-h-screen flex-col">
         {/* Header */}
         <Header
-          logoUrl={siteSettings.logoUrl}
-          siteName={siteSettings.siteName}
+          logoUrl="/circle-logo.png"
+          siteName={settings.site_name}
         />
 
         {/* Main Content */}
@@ -59,18 +50,18 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* Footer */}
         <Footer
-          siteName={siteSettings.siteName}
-          email={siteSettings.contact.email}
-          phone={siteSettings.contact.phone}
-          address={siteSettings.contact.address}
-          socialLinks={siteSettings.social}
+          siteName={settings.site_name}
+          email={settings.contact_email}
+          phone={settings.contact_phone}
+          address={settings.contact_address}
+          socialLinks={socialLinks}
         />
 
         {/* WhatsApp Floating Button */}
         <WhatsAppFloat
-          phoneNumber={siteSettings.whatsapp.phoneNumber}
-          message={siteSettings.whatsapp.message}
-          enabled={siteSettings.whatsapp.enabled}
+          phoneNumber={settings.whatsapp_number}
+          message={settings.whatsapp_message}
+          enabled={settings.whatsapp_enabled && !!settings.whatsapp_number}
         />
       </div>
     </ThemeProvider>

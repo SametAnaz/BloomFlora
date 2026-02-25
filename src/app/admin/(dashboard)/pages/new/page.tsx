@@ -78,7 +78,6 @@ export default function NewPagePage() {
         slug,
         status: 'draft',
         blocks: [],
-        is_homepage: false,
       };
       
       const { data, error: createError } = await supabase

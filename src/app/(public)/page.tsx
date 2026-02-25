@@ -314,27 +314,15 @@ export default async function HomePage() {
     const supabase = await createClient();
     let pageData: PageRow | null = null;
     
-    // First try to get the home page - by is_homepage flag
+    // Get the home page by slug
     const { data: homePage } = await supabase
       .from('pages')
       .select('*')
-      .eq('is_homepage', true)
-      .single();
+      .eq('slug', 'anasayfa')
+      .maybeSingle();
 
     if (homePage) {
       pageData = homePage as PageRow;
-    } else {
-      // Fallback to common homepage slugs if no homepage flag set
-      const { data: slugPage } = await supabase
-        .from('pages')
-        .select('*')
-        .in('slug', ['home', 'anasayfa', 'ana-sayfa'])
-        .limit(1)
-        .single();
-      
-      if (slugPage) {
-        pageData = slugPage as PageRow;
-      }
     }
 
     // Auto-seed: If no homepage exists at all, create it with default blocks
@@ -346,11 +334,11 @@ export default async function HomePage() {
           title: 'Ana Sayfa',
           slug: 'anasayfa',
           status: 'published',
-          is_homepage: true,
           blocks: demoBlocks as unknown as PageRow['blocks'],
-          seo_title: 'Bloom Flora - Rize Çiçekçi | Taze Çiçek Teslimatı',
-          seo_description:
-            "Rize'nin en taze çiçekleri, özenle hazırlanmış aranjmanlar ve aynı gün teslimat.",
+          seo: {
+            title: 'Bloom Flora - Rize Çiçekçi | Taze Çiçek Teslimatı',
+            description: "Rize'nin en taze çiçekleri, özenle hazırlanmış aranjmanlar ve aynı gün teslimat.",
+          },
         } as never)
         .select('*')
         .single();

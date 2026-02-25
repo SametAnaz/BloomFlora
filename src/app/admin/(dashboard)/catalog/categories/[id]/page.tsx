@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { ImageField } from '@/components/admin/image-field';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 
@@ -29,6 +30,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [order, setOrder] = useState(0);
+  const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,6 +58,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
       setDescription(cat.description || '');
       setIsActive(cat.is_active);
       setOrder(cat.order);
+      setImageUrl(cat.image_url || '');
       setIsLoading(false);
     };
 
@@ -85,7 +88,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
         .select('id')
         .eq('slug', slug)
         .neq('id', category.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         setError('Bu URL başka bir kategori tarafından kullanılıyor');
@@ -97,6 +100,7 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
         name,
         slug,
         description: description || null,
+        image_url: imageUrl || null,
         is_active: isActive,
         order,
         updated_at: new Date().toISOString(),
@@ -225,6 +229,13 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
             className="w-32 rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
+
+        <ImageField
+          label="Kategori Görseli"
+          value={imageUrl}
+          onChange={setImageUrl}
+          placeholder="Kategori görseli seçin veya yükleyin"
+        />
 
         <div className="flex items-center gap-2">
           <input

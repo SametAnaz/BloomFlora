@@ -38,7 +38,7 @@ export function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-[#4D1D2A] text-[#F5E6E8] backdrop-blur">
+    <header className="sticky top-0 z-50 bg-[#4D1D2A] text-[#F5E6E8] backdrop-blur">
       <div className="container-mobile">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
