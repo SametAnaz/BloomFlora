@@ -22,6 +22,13 @@ import { createClient } from '@/lib/supabase/client';
 // Force dynamic rendering (uses cookies for Supabase)
 export const dynamic = 'force-dynamic';
 
+interface StorageUsage {
+  used: number;
+  limit: number;
+  fileCount: number;
+  percentage: number;
+}
+
 export default function MediaPage() {
   const [media, setMedia] = useState<MediaFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +36,25 @@ export default function MediaPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
+
+  // Fetch storage usage
+  const fetchStorageUsage = async () => {
+    try {
+      const res = await fetch('/api/media/storage');
+      const data = await res.json();
+      if (data.success) {
+        setStorageUsage({
+          used: data.used,
+          limit: data.limit,
+          fileCount: data.fileCount,
+          percentage: data.percentage,
+        });
+      }
+    } catch {
+      // silently ignore
+    }
+  };
 
   // Load media on mount
   useEffect(() => {
@@ -50,10 +76,12 @@ export default function MediaPage() {
     };
 
     loadMedia();
+    fetchStorageUsage();
   }, []);
 
   const handleUploadComplete = (file: MediaFile) => {
     setMedia((prev) => [file, ...prev]);
+    fetchStorageUsage();
   };
 
   const toggleSelect = (id: string) => {
@@ -87,6 +115,7 @@ export default function MediaPage() {
     setMedia((prev) => prev.filter((m) => !selectedItems.includes(m.id)));
     setSelectedItems([]);
     setIsDeleting(false);
+    fetchStorageUsage();
   };
 
   const copyUrl = async (url: string) => {
@@ -118,6 +147,56 @@ export default function MediaPage() {
           Yeni Yükle
         </button>
       </div>
+
+      {/* Storage Usage Indicator */}
+      {storageUsage ? (
+        <div className="rounded-lg border bg-card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+              </svg>
+              <span className="text-sm font-medium">Depolama Alanı</span>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {storageUsage.fileCount} dosya
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                storageUsage.percentage >= 90
+                  ? 'bg-destructive'
+                  : storageUsage.percentage >= 70
+                    ? 'bg-yellow-500'
+                    : 'bg-primary'
+              }`}
+              style={{ width: `${Math.min(storageUsage.percentage, 100)}%` }}
+            />
+          </div>
+
+          {/* Labels */}
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              <span className="font-medium text-foreground">{formatFileSize(storageUsage.used)}</span>
+              {' '}/ {formatFileSize(storageUsage.limit)} kullanılıyor
+            </span>
+            <span>
+              {storageUsage.percentage >= 90 ? (
+                <span className="font-medium text-destructive">
+                  %{storageUsage.percentage} — Alan azalıyor!
+                </span>
+              ) : (
+                <span>
+                  {formatFileSize(storageUsage.limit - storageUsage.used)} kalan
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       {/* Upload Section */}
       {showUpload ? (
