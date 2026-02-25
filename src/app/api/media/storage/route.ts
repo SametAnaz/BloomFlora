@@ -27,7 +27,7 @@ export async function GET() {
       );
     }
 
-    const files = data || [];
+    const files = (data || []) as { size: number | null }[];
     const totalUsed = files.reduce((sum, row) => sum + (row.size || 0), 0);
     const fileCount = files.length;
 

@@ -9,6 +9,8 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 
+import { CartIcon } from '@/components/cart/cart-icon';
+
 interface NavItem {
   label: string;
   href: string;
@@ -21,6 +23,8 @@ interface HeaderProps {
   siteName?: string;
   /** Navigation items */
   navItems?: NavItem[];
+  /** WhatsApp number (needed for cart checkout) */
+  whatsappNumber?: string;
 }
 
 const defaultNavItems: NavItem[] = [
@@ -35,6 +39,7 @@ export function Header({
   siteName = 'BloomFlora',
   navItems = defaultNavItems,
 }: HeaderProps) {
+  // whatsappNumber used indirectly by CartDrawer via context
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -66,13 +71,17 @@ export function Header({
                 {item.label}
               </Link>
             ))}
+            {/* Cart Icon */}
+            <CartIcon />
           </nav>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-md md:hidden"
+          {/* Mobile: Cart + Hamburger */}
+          <div className="flex items-center gap-1 md:hidden">
+            <CartIcon />
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-md"
             aria-label={isMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
             aria-expanded={isMenuOpen}
           >
@@ -99,7 +108,8 @@ export function Header({
                 />
               )}
             </svg>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}

@@ -9,9 +9,10 @@ import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { AttributeEditor } from '@/components/admin/attribute-editor';
 import { ImageField } from '@/components/admin/image-field';
 import { createClient } from '@/lib/supabase/client';
-import type { Database } from '@/lib/supabase/types';
+import type { Database, ItemAttribute } from '@/lib/supabase/types';
 
 // Force dynamic rendering (uses cookies for Supabase)
 export const dynamic = 'force-dynamic';
@@ -26,11 +27,13 @@ export default function NewItemPage() {
   // Form state
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [productCode, setProductCode] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [customAttributes, setCustomAttributes] = useState<ItemAttribute[]>([]);
   const [imageUrl, setImageUrl] = useState('');
   
   const [isCreating, setIsCreating] = useState(false);
@@ -78,6 +81,10 @@ export default function NewItemPage() {
       setError('URL slug gerekli');
       return;
     }
+    if (!productCode.trim()) {
+      setError('Ürün kodu gerekli');
+      return;
+    }
 
     setIsCreating(true);
     setError(null);
@@ -108,6 +115,8 @@ export default function NewItemPage() {
         category_id: categoryId || null,
         is_active: isActive,
         is_featured: isFeatured,
+        product_code: productCode.trim(),
+        custom_attributes: JSON.parse(JSON.stringify(customAttributes)),
       };
 
       console.log('[items/new] Inserting:', JSON.stringify(insertData));
@@ -187,6 +196,20 @@ export default function NewItemPage() {
               </div>
 
               <div>
+                <label htmlFor="product-code" className="mb-1.5 block text-sm font-medium">
+                  Ürün Kodu <span className="text-destructive">*</span>
+                </label>
+                <input
+                  id="product-code"
+                  type="text"
+                  value={productCode}
+                  onChange={(e) => setProductCode(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="Örn: BF-001"
+                />
+              </div>
+
+              <div>
                 <label htmlFor="slug" className="mb-1.5 block text-sm font-medium">URL Slug</label>
                 <div className="flex items-center overflow-hidden rounded-lg border border-input focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="border-r bg-muted px-3 py-2.5 text-sm text-muted-foreground">/urun/</span>
@@ -261,6 +284,9 @@ export default function NewItemPage() {
               />
             </div>
           </div>
+
+          {/* Custom Attributes */}
+          <AttributeEditor value={customAttributes} onChange={setCustomAttributes} />
         </div>
 
         {/* Sidebar */}
@@ -272,13 +298,13 @@ export default function NewItemPage() {
             </div>
             <div className="space-y-4 p-6">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium">Görünürlük</p>
                   <p className="text-xs text-muted-foreground">Sitede gösterilsin mi?</p>
                 </div>
                 <button
                   onClick={() => setIsActive(!isActive)}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 ${
+                  className={`inline-flex min-w-[5.5rem] items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 shrink-0 ${
                     isActive
                       ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25 hover:bg-emerald-500/25'
                       : 'bg-muted text-muted-foreground border border-border hover:bg-accent'
@@ -292,13 +318,13 @@ export default function NewItemPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium">Öne Çıkan</p>
                   <p className="text-xs text-muted-foreground">Vitrin ürünü mü?</p>
                 </div>
                 <button
                   onClick={() => setIsFeatured(!isFeatured)}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 ${
+                  className={`inline-flex min-w-[5.5rem] items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 shrink-0 ${
                     isFeatured
                       ? 'bg-amber-500/15 text-amber-500 border border-amber-500/25 hover:bg-amber-500/25'
                       : 'bg-muted text-muted-foreground border border-border hover:bg-accent'
@@ -308,6 +334,8 @@ export default function NewItemPage() {
                   {isFeatured ? 'Evet' : 'Hayır'}
                 </button>
               </div>
+
+
             </div>
           </div>
 

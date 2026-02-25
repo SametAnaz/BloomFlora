@@ -3,9 +3,11 @@
  * Wraps all public pages with header, footer, theme provider, and WhatsApp button
  */
 
+import { CartDrawer } from '@/components/cart/cart-drawer';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { WhatsAppFloat } from '@/components/ui/whatsapp-float';
+import { CartProvider } from '@/lib/cart/cart-context';
 
 import { initializeModules } from '@/modules';
 
@@ -38,11 +40,13 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
 
   return (
     <ThemeProvider initialTheme={theme}>
+      <CartProvider>
       <div className="flex min-h-screen flex-col">
         {/* Header */}
         <Header
           logoUrl="/circle-logo.png"
           siteName={settings.site_name}
+          whatsappNumber={settings.whatsapp_number}
         />
 
         {/* Main Content */}
@@ -63,7 +67,11 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
           message={settings.whatsapp_message}
           enabled={settings.whatsapp_enabled && !!settings.whatsapp_number}
         />
+
+        {/* Cart Drawer */}
+        <CartDrawer whatsappNumber={settings.whatsapp_number} />
       </div>
+      </CartProvider>
     </ThemeProvider>
   );
 }

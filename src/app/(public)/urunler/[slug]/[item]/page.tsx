@@ -7,9 +7,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { getSiteSettings } from '@/lib/settings/getSiteSettings';
 import { createClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/supabase/types';
+import type { Database, ItemAttribute } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,27 +92,27 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
       {/* Breadcrumb */}
       <div className="border-b border-[#E8D5D0] bg-white">
         <div className="container-mobile py-3">
-          <nav className="flex items-center gap-2 text-sm text-[#8B6F75]">
-            <Link href="/" className="hover:text-[#4D1D2A]">
+          <nav className="flex flex-wrap items-center gap-y-1 text-sm text-[#8B6F75]">
+            <Link href="/" className="hover:text-[#4D1D2A] whitespace-nowrap">
               Ana Sayfa
             </Link>
-            <span>/</span>
-            <Link href="/urunler" className="hover:text-[#4D1D2A]">
+            <span className="mx-2 text-[#C4959E] select-none">{'/'}</span>
+            <Link href="/urunler" className="hover:text-[#4D1D2A] whitespace-nowrap">
               Ürünler
             </Link>
             {category ? (
               <>
-                <span>/</span>
+                <span className="mx-2 text-[#C4959E] select-none">{'/'}</span>
                 <Link
                   href={`/urunler/${category.slug}`}
-                  className="hover:text-[#4D1D2A]"
+                  className="hover:text-[#4D1D2A] whitespace-nowrap"
                 >
                   {category.name}
                 </Link>
               </>
             ) : null}
-            <span>/</span>
-            <span className="text-[#4D1D2A]">{item.name}</span>
+            <span className="mx-2 text-[#C4959E] select-none">{'/'}</span>
+            <span className="font-medium text-[#4D1D2A] whitespace-nowrap">{item.name}</span>
           </nav>
         </div>
       </div>
@@ -183,8 +184,20 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
               </div>
             ) : null}
 
-            {/* WhatsApp CTA */}
+            {/* Add to Cart + WhatsApp CTA */}
             <div className="mt-8 space-y-3">
+              <AddToCartButton
+                item={{
+                  id: item.id,
+                  name: item.name,
+                  slug: item.slug,
+                  categorySlug: categorySlug,
+                  imageUrl: item.image_url,
+                  price: item.price,
+                  productCode: item.product_code ?? null,
+                  customAttributes: Array.isArray(item.custom_attributes) ? item.custom_attributes as unknown as ItemAttribute[] : [],
+                }}
+              />
               <a
                 href={`https://wa.me/${siteSettings.whatsapp_number || ''}?text=${encodeURIComponent(`Merhaba, "${item.name}" hakkında bilgi almak istiyorum.`)}`}
                 target="_blank"

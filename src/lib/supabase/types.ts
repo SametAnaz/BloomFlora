@@ -54,6 +54,16 @@ export interface ThemeTokens {
   shadow: string;
 }
 
+/** Modular product attribute definition (stored as JSONB on items) */
+export interface ItemAttribute {
+  id: string;                                     // unique id
+  name: string;                                   // e.g. "Renk", "Boyut"
+  type: 'dropdown' | 'text' | 'number' | 'toggle'; // input type
+  options?: string[];                              // dropdown seçenekleri
+  required: boolean;
+  placeholder?: string;                            // toggle: açıkken gösterilecek metin alanı placeholder'ı
+}
+
 export interface MediaItem {
   id: string;
   path: string;
@@ -185,6 +195,9 @@ export interface Database {
           category_id: string | null;
           is_active: boolean;
           is_featured: boolean;
+          has_name_tag: boolean;
+          product_code: string | null;
+          custom_attributes: Json;
           order: number;
           created_at: string;
           updated_at: string;
@@ -199,6 +212,9 @@ export interface Database {
           category_id?: string | null;
           is_active?: boolean;
           is_featured?: boolean;
+          has_name_tag?: boolean;
+          product_code?: string | null;
+          custom_attributes?: Json;
           order?: number;
           created_at?: string;
           updated_at?: string;
@@ -213,6 +229,9 @@ export interface Database {
           category_id?: string | null;
           is_active?: boolean;
           is_featured?: boolean;
+          has_name_tag?: boolean;
+          product_code?: string | null;
+          custom_attributes?: Json;
           order?: number;
           created_at?: string;
           updated_at?: string;
