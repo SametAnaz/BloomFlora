@@ -275,13 +275,16 @@ export default function ItemsPage() {
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => handleToggleActive(item)}
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium transition-colors ${
+                      className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 ${
                         item.is_active
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                          ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25 hover:bg-emerald-500/25'
+                          : 'bg-muted text-muted-foreground border border-border hover:bg-accent'
                       }`}
                       title={item.is_active ? 'Pasife al' : 'Aktif yap'}
                     >
+                      <span className={`h-1.5 w-1.5 rounded-full ${
+                        item.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50'
+                      }`} />
                       {item.is_active ? 'Aktif' : 'Pasif'}
                     </button>
                   </td>

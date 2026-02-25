@@ -3,10 +3,14 @@
  * Admin page to manage product/service categories
  */
 
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/supabase/types';
 
 // Force dynamic rendering (uses cookies for Supabase)
@@ -14,15 +18,47 @@ export const dynamic = 'force-dynamic';
 
 type CategoryRow = Database['public']['Tables']['categories']['Row'];
 
-export default async function CategoriesPage() {
-  const supabase = await createClient();
+export default function CategoriesPage() {
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data } = await supabase
-    .from('categories')
-    .select('*')
-    .order('order', { ascending: true });
+  const loadData = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('categories')
+      .select('*')
+      .order('order', { ascending: true });
+    setCategories((data || []) as unknown as CategoryRow[]);
+    setIsLoading(false);
+  }, []);
 
-  const categories = (data || []) as unknown as CategoryRow[];
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleToggleActive = async (e: React.MouseEvent, category: CategoryRow) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('categories')
+        .update({ is_active: !category.is_active, updated_at: new Date().toISOString() } as never)
+        .eq('id', category.id);
+      if (error) throw error;
+      setCategories((prev) =>
+        prev.map((c) => (c.id === category.id ? { ...c, is_active: !c.is_active } : c))
+      );
+    } catch {
+      // silently ignore
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -81,15 +117,20 @@ export default async function CategoriesPage() {
                       {category.description || 'Açıklama yok'}
                     </p>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-1 text-xs ${
+                  <button
+                    onClick={(e) => handleToggleActive(e, category)}
+                    className={`shrink-0 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide uppercase transition-all duration-200 ${
                       category.is_active
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                        ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25 hover:bg-emerald-500/25'
+                        : 'bg-muted text-muted-foreground border border-border hover:bg-accent'
                     }`}
+                    title={category.is_active ? 'Pasife al' : 'Aktif yap'}
                   >
+                    <span className={`h-1.5 w-1.5 rounded-full ${
+                      category.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50'
+                    }`} />
                     {category.is_active ? 'Aktif' : 'Pasif'}
-                  </span>
+                  </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span>Sıra: {category.order}</span>
