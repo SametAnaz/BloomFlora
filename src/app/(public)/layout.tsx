@@ -11,6 +11,7 @@ import { CartProvider } from '@/lib/cart/cart-context';
 
 import { initializeModules } from '@/modules';
 
+import { getNavigationConfig } from '@/lib/navigation';
 import { getSiteSettings } from '@/lib/settings/getSiteSettings';
 import { ThemeProvider } from '@/lib/theme';
 import { getActiveTheme } from '@/lib/theme/getTheme';
@@ -26,10 +27,11 @@ interface PublicLayoutProps {
 }
 
 export default async function PublicLayout({ children }: PublicLayoutProps) {
-  // Fetch active theme and site settings from Supabase in parallel
-  const [theme, settings] = await Promise.all([
+  // Fetch active theme, site settings, and navigation config in parallel
+  const [theme, settings, navConfig] = await Promise.all([
     getActiveTheme(),
     getSiteSettings(),
+    getNavigationConfig(),
   ]);
 
   // Build social links array from settings
@@ -46,6 +48,7 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
         <Header
           logoUrl="/circle-logo.png"
           siteName={settings.site_name}
+          config={navConfig.header}
           whatsappNumber={settings.whatsapp_number}
         />
 
@@ -58,6 +61,7 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
           email={settings.contact_email}
           phone={settings.contact_phone}
           address={settings.contact_address}
+          config={navConfig.footer}
           socialLinks={socialLinks}
         />
 

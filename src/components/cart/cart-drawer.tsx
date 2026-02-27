@@ -155,7 +155,7 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
           ) : (
             <div className="space-y-5">
               {items.map((item) => (
-                <div key={item.id} className="rounded-xl border border-[#E8D5D0] bg-[#FDFAF8] p-4">
+                <div key={item.cartKey} className="rounded-xl border border-[#E8D5D0] bg-[#FDFAF8] p-4">
                   <div className="flex gap-3">
                     {/* Image */}
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[#F5E6E8]">
@@ -175,7 +175,7 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-semibold text-[#4D1D2A] leading-tight">{item.name}</p>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.cartKey)}
                           className="shrink-0 rounded p-1 text-[#8B6F75] hover:bg-red-50 hover:text-red-500 transition-colors"
                           title="Kaldır"
                         >
@@ -191,7 +191,7 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
                       {/* Quantity */}
                       <div className="mt-2 flex items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.cartKey, item.quantity - 1)}
                           disabled={item.quantity <= 1}
                           className="flex h-7 w-7 items-center justify-center rounded-md border border-[#E8D5D0] bg-white text-[#8B6F75] hover:border-[#8B3A4A] hover:text-[#8B3A4A] disabled:opacity-30 transition-colors"
                         >
@@ -201,7 +201,7 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
                           className="flex h-7 w-7 items-center justify-center rounded-md border border-[#E8D5D0] bg-white text-[#8B6F75] hover:border-[#8B3A4A] hover:text-[#8B3A4A] transition-colors"
                         >
                           +
@@ -230,7 +230,7 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
                   {/* Gift Card */}
                   <GiftCardField
                     giftCardText={item.giftCardText}
-                    onChange={(text) => updateGiftCardText(item.id, text)}
+                    onChange={(text) => updateGiftCardText(item.cartKey, text)}
                   />
                 </div>
               ))}

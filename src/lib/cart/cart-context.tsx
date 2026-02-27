@@ -10,6 +10,7 @@ export interface CartItemAttributeValue {
 }
 
 export interface CartItem {
+  cartKey: string;     // unique key: id + attributes hash
   id: string;          // item id from DB
   name: string;
   slug: string;
@@ -38,9 +39,9 @@ interface CartContextType {
   totalCount: number;
   totalPrice: number;
   addItem: (item: AddItemPayload) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, qty: number) => void;
-  updateGiftCardText: (id: string, text: string) => void;
+  removeItem: (cartKey: string) => void;
+  updateQuantity: (cartKey: string, qty: number) => void;
+  updateGiftCardText: (cartKey: string, text: string) => void;
   clearCart: () => void;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
@@ -51,6 +52,14 @@ const CartContext = createContext<CartContextType | null>(null);
 const STORAGE_KEY = 'bloomflora-cart';
 
 /* ─── Helpers ──────────────────────────────────────────────────────── */
+
+/** Build a unique cart key from product id + sorted attribute values */
+function buildCartKey(id: string, attrs: CartItemAttributeValue[] = []): string {
+  if (attrs.length === 0) return id;
+  const sorted = [...attrs].sort((a, b) => a.name.localeCompare(b.name));
+  const suffix = sorted.map((a) => `${a.name}=${a.value}`).join('|');
+  return `${id}::${suffix}`;
+}
 
 function loadCart(): CartItem[] {
   if (typeof window === 'undefined') return [];
@@ -87,29 +96,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   const addItem = useCallback((newItem: AddItemPayload) => {
+    const attrs = newItem.customAttributes || [];
+    const key = buildCartKey(newItem.id, attrs);
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === newItem.id);
+      const existing = prev.find((i) => i.cartKey === key);
       if (existing) {
         return prev.map((i) =>
-          i.id === newItem.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.cartKey === key ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { ...newItem, quantity: 1, productCode: newItem.productCode ?? null, giftCardText: '', customAttributes: newItem.customAttributes || [] }];
+      return [...prev, { ...newItem, cartKey: key, quantity: 1, productCode: newItem.productCode ?? null, giftCardText: '', customAttributes: attrs }];
     });
     setIsCartOpen(true);
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = useCallback((cartKey: string) => {
+    setItems((prev) => prev.filter((i) => i.cartKey !== cartKey));
   }, []);
 
-  const updateQuantity = useCallback((id: string, qty: number) => {
+  const updateQuantity = useCallback((cartKey: string, qty: number) => {
     if (qty < 1) return;
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i)));
+    setItems((prev) => prev.map((i) => (i.cartKey === cartKey ? { ...i, quantity: qty } : i)));
   }, []);
 
-  const updateGiftCardText = useCallback((id: string, giftCardText: string) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, giftCardText } : i)));
+  const updateGiftCardText = useCallback((cartKey: string, giftCardText: string) => {
+    setItems((prev) => prev.map((i) => (i.cartKey === cartKey ? { ...i, giftCardText } : i)));
   }, []);
 
   const clearCart = useCallback(() => {
