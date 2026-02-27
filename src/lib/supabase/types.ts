@@ -197,6 +197,7 @@ export interface Database {
           is_featured: boolean;
           has_name_tag: boolean;
           product_code: string | null;
+          gallery_images: Json;
           custom_attributes: Json;
           order: number;
           created_at: string;
@@ -214,6 +215,7 @@ export interface Database {
           is_featured?: boolean;
           has_name_tag?: boolean;
           product_code?: string | null;
+          gallery_images?: Json;
           custom_attributes?: Json;
           order?: number;
           created_at?: string;
@@ -231,6 +233,7 @@ export interface Database {
           is_featured?: boolean;
           has_name_tag?: boolean;
           product_code?: string | null;
+          gallery_images?: Json;
           custom_attributes?: Json;
           order?: number;
           created_at?: string;

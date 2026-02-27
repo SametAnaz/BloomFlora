@@ -7,11 +7,10 @@
 
 import { useState, useEffect } from 'react';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { AttributeEditor } from '@/components/admin/attribute-editor';
-import { ImageField } from '@/components/admin/image-field';
+import { GalleryField } from '@/components/admin/gallery-field';
 import { createClient } from '@/lib/supabase/client';
 import type { Database, ItemAttribute } from '@/lib/supabase/types';
 
@@ -41,6 +40,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
   const [isFeatured, setIsFeatured] = useState(false);
   const [customAttributes, setCustomAttributes] = useState<ItemAttribute[]>([]);
   const [imageUrl, setImageUrl] = useState('');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -72,6 +72,8 @@ export default function EditItemPage({ params }: EditItemPageProps) {
       setIsFeatured(loadedItem.is_featured);
       setCustomAttributes(Array.isArray(loadedItem.custom_attributes) ? loadedItem.custom_attributes as unknown as ItemAttribute[] : []);
       setImageUrl(loadedItem.image_url || '');
+      const gi = (loadedItem as unknown as { gallery_images?: unknown }).gallery_images;
+      setGalleryImages(Array.isArray(gi) ? (gi as string[]) : (loadedItem.image_url ? [loadedItem.image_url] : []));
 
       setCategories(categoriesRes.data || []);
       setIsLoading(false);
@@ -124,6 +126,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
         is_active: isActive,
         is_featured: isFeatured,
         product_code: productCode.trim() || null,
+        gallery_images: galleryImages.length > 0 ? galleryImages : [],
         custom_attributes: JSON.parse(JSON.stringify(customAttributes)),
         image_url: imageUrl || null,
         updated_at: new Date().toISOString(),
@@ -313,17 +316,17 @@ export default function EditItemPage({ params }: EditItemPageProps) {
             </div>
           </div>
 
-          {/* Image */}
+          {/* Image Gallery */}
           <div className="rounded-xl border bg-card shadow-sm">
             <div className="border-b px-6 py-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Görsel</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Görseller</h2>
             </div>
             <div className="p-6">
-              <ImageField
-                label=""
-                value={imageUrl}
-                onChange={setImageUrl}
-                placeholder="Ürün görseli seçin veya yükleyin"
+              <GalleryField
+                images={galleryImages}
+                coverImage={imageUrl}
+                onImagesChange={setGalleryImages}
+                onCoverChange={setImageUrl}
               />
             </div>
           </div>

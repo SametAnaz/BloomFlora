@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { AttributeEditor } from '@/components/admin/attribute-editor';
-import { ImageField } from '@/components/admin/image-field';
+import { GalleryField } from '@/components/admin/gallery-field';
 import { createClient } from '@/lib/supabase/client';
 import type { Database, ItemAttribute } from '@/lib/supabase/types';
 
@@ -35,6 +35,7 @@ export default function NewItemPage() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [customAttributes, setCustomAttributes] = useState<ItemAttribute[]>([]);
   const [imageUrl, setImageUrl] = useState('');
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +117,7 @@ export default function NewItemPage() {
         is_active: isActive,
         is_featured: isFeatured,
         product_code: productCode.trim(),
+        gallery_images: galleryImages.length > 0 ? galleryImages : [],
         custom_attributes: JSON.parse(JSON.stringify(customAttributes)),
       };
 
@@ -270,17 +272,17 @@ export default function NewItemPage() {
             </div>
           </div>
 
-          {/* Image */}
+          {/* Image Gallery */}
           <div className="rounded-xl border bg-card shadow-sm">
             <div className="border-b px-6 py-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Görsel</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Görseller</h2>
             </div>
             <div className="p-6">
-              <ImageField
-                label=""
-                value={imageUrl}
-                onChange={setImageUrl}
-                placeholder="Ürün görseli seçin veya yükleyin"
+              <GalleryField
+                images={galleryImages}
+                coverImage={imageUrl}
+                onImagesChange={setGalleryImages}
+                onCoverChange={setImageUrl}
               />
             </div>
           </div>
