@@ -211,7 +211,7 @@ function CtaV1Editor({
 
   const addButton = (variant: string) => {
     const labels: Record<string, string> = { white: 'Beyaz Buton', outline: 'Çerçeveli Buton', ghost: 'Hayalet Buton' };
-    updateButtons([...buttons, { id: `cta-${Date.now()}`, text: labels[variant] || 'Buton', link: '#', variant: variant as CtaButton['variant'] }]);
+    updateButtons([...buttons, { id: `cta-${Date.now()}`, text: labels[variant] || 'Buton', link: '/', variant: variant as CtaButton['variant'] }]);
     setShowAddBtn(false);
   };
 
@@ -292,7 +292,7 @@ function CtaV1Editor({
               </div>
               <div className="space-y-2">
                 <input type="text" value={btn.text} onChange={(e) => updateButton(index, { text: e.target.value })} className={inputCls} placeholder="Buton metni" />
-                <input type="text" value={btn.link} onChange={(e) => updateButton(index, { link: e.target.value })} className={inputCls} placeholder="Link" />
+                <input type="text" value={btn.link} onChange={(e) => updateButton(index, { link: e.target.value })} className={inputCls} placeholder="/urunler veya #iletisim" />
                 <div className="grid grid-cols-2 gap-2">
                   <select value={btn.variant || 'white'} onChange={(e) => updateButton(index, { variant: e.target.value as CtaButton['variant'] })} className={inputCls}>
                     <option value="white">Beyaz</option>

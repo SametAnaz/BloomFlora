@@ -263,7 +263,7 @@ function HeroV1Editor({
       ghost: 'Hayalet Buton',
       link: 'Link Buton',
     };
-    updateButtons([...buttons, { id, text: labels[variant] || 'Buton', href: '#', variant: variant as HeroButton['variant'] }]);
+    updateButtons([...buttons, { id, text: labels[variant] || 'Buton', href: '/', variant: variant as HeroButton['variant'] }]);
     setShowAddButton(false);
   };
 
