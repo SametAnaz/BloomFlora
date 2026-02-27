@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
+import { ProductComments } from '@/components/comments/product-comments';
 import { ProductGallery } from '@/components/product-gallery';
 import { getSiteSettings } from '@/lib/settings/getSiteSettings';
 import { createClient } from '@/lib/supabase/server';
@@ -264,6 +265,9 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
           </div>
         </section>
       ) : null}
+
+      {/* Comments Section */}
+      <ProductComments itemId={item.id} />
 
       {/* Back Link */}
       <div className="container-mobile py-8">

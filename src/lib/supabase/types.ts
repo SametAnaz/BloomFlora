@@ -330,6 +330,44 @@ export interface Database {
           updated_at?: string;
         };
       };
+      comments: {
+        Row: {
+          id: string;
+          item_id: string;
+          parent_id: string | null;
+          author_name: string;
+          author_email: string;
+          body: string;
+          rating: number | null;
+          status: 'pending' | 'approved' | 'rejected';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_id: string;
+          parent_id?: string | null;
+          author_name: string;
+          author_email: string;
+          body: string;
+          rating?: number | null;
+          status?: 'pending' | 'approved' | 'rejected';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          item_id?: string;
+          parent_id?: string | null;
+          author_name?: string;
+          author_email?: string;
+          body?: string;
+          rating?: number | null;
+          status?: 'pending' | 'approved' | 'rejected';
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -361,3 +399,4 @@ export type Item = Tables<'items'>;
 export type Collection = Tables<'collections'>;
 export type Media = Tables<'media'>;
 export type SiteSetting = Tables<'site_settings'>;
+export type Comment = Tables<'comments'>;
