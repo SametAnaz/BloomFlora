@@ -1,11 +1,12 @@
 /**
  * Cloudflare Turnstile Widget — React wrapper
  * Loads the Turnstile script and renders the challenge widget.
+ * Uses refs for callbacks to prevent re-render loops.
  */
 
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 /* ── Global type augmentation ────────────────────────────── */
 
@@ -53,14 +54,19 @@ export function Turnstile({
 }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const renderedRef = useRef(false);
 
-  const renderWidget = useCallback(() => {
-    if (!window.turnstile || !containerRef.current) return;
+  // Store callbacks in refs so widget doesn't re-mount on re-renders
+  const onVerifyRef = useRef(onVerify);
+  const onExpireRef = useRef(onExpire);
+  const onErrorRef = useRef(onError);
+  onVerifyRef.current = onVerify;
+  onExpireRef.current = onExpire;
+  onErrorRef.current = onError;
 
-    // Clean up previous widget if any
-    if (widgetIdRef.current) {
-      try { window.turnstile.remove(widgetIdRef.current); } catch { /* ignore */ }
-    }
+  useEffect(() => {
+    // Only render widget once
+    if (renderedRef.current) return;
 
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     if (!siteKey) {
@@ -68,36 +74,37 @@ export function Turnstile({
       return;
     }
 
-    widgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: siteKey,
-      callback: onVerify,
-      'expired-callback': onExpire,
-      'error-callback': onError,
-      theme,
-      size,
-    });
-  }, [onVerify, onExpire, onError, theme, size]);
+    function doRender() {
+      if (!window.turnstile || !containerRef.current || renderedRef.current) return;
+      renderedRef.current = true;
 
-  useEffect(() => {
-    // If script already loaded, render immediately
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey!,
+        callback: (token: string) => onVerifyRef.current(token),
+        'expired-callback': () => onExpireRef.current?.(),
+        'error-callback': () => onErrorRef.current?.(),
+        theme,
+        size,
+      });
+    }
+
+    // Script already loaded
     if (window.turnstile) {
-      renderWidget();
+      doRender();
       return;
     }
 
-    // Check if script tag already exists
+    // Script tag exists but not loaded yet
     const existing = document.querySelector(
       'script[src*="challenges.cloudflare.com/turnstile"]',
     );
-
     if (existing) {
-      // Script tag exists but hasn't loaded yet — wait
-      existing.addEventListener('load', renderWidget);
+      existing.addEventListener('load', doRender);
       return;
     }
 
-    // Load the script
-    window.onTurnstileLoad = renderWidget;
+    // Load script
+    window.onTurnstileLoad = doRender;
     const script = document.createElement('script');
     script.src =
       'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
@@ -109,9 +116,11 @@ export function Turnstile({
       if (widgetIdRef.current && window.turnstile) {
         try { window.turnstile.remove(widgetIdRef.current); } catch { /* ignore */ }
         widgetIdRef.current = null;
+        renderedRef.current = false;
       }
     };
-  }, [renderWidget]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
 
   return <div ref={containerRef} className={className} />;
 }
