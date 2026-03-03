@@ -18,11 +18,22 @@ const featureItemSchema = z.object({
   description: z.string().optional(),
 });
 
+const featuresTextStyleSchema = z.object({
+  fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold', 'extrabold']).optional(),
+  fontStyle: z.enum(['normal', 'italic']).optional(),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
+  color: z.string().optional(),
+});
+
 export const featuresV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
+  /** Section title style */
+  sectionTitleStyle: featuresTextStyleSchema.optional(),
   /** Section subtitle */
   subtitle: z.string().optional(),
+  /** Section subtitle style */
+  sectionSubtitleStyle: featuresTextStyleSchema.optional(),
   /** Feature items */
   features: z.array(featureItemSchema).default([]),
   /** Grid columns */
@@ -165,6 +176,15 @@ const iconCategories = [
 ];
 
 // =====================================================
+const twFW: Record<string, string> = { normal: 'font-normal', medium: 'font-medium', semibold: 'font-semibold', bold: 'font-bold', extrabold: 'font-extrabold' };
+const twFS: Record<string, string> = { normal: 'not-italic', italic: 'italic' };
+const twDec: Record<string, string> = { none: 'no-underline', underline: 'underline', 'line-through': 'line-through' };
+type FeatTextStyle = { fontWeight?: string; fontStyle?: string; textDecoration?: string; color?: string };
+function buildFeatTextClass(s?: FeatTextStyle) {
+  if (!s) return '';
+  return [s.fontWeight && twFW[s.fontWeight], s.fontStyle && twFS[s.fontStyle], s.textDecoration && twDec[s.textDecoration]].filter(Boolean).join(' ');
+}
+
 // Render Component
 // =====================================================
 
@@ -198,10 +218,14 @@ function FeaturesV1Render({
         {(config.title || config.subtitle) && (
           <div className={`mb-12 ${config.alignment === 'center' ? 'text-center' : ''}`}>
             {config.title && (
-              <h2 className="text-3xl font-bold md:text-4xl">{config.title}</h2>
+              <h2 className={`text-3xl font-bold md:text-4xl ${buildFeatTextClass(config.sectionTitleStyle)}`}
+                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+              >{config.title}</h2>
             )}
             {config.subtitle && (
-              <p className="mt-3 text-lg text-muted-foreground">{config.subtitle}</p>
+              <p className={`mt-3 text-lg text-muted-foreground ${buildFeatTextClass(config.sectionSubtitleStyle)}`}
+                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+              >{config.subtitle}</p>
             )}
           </div>
         )}
@@ -301,6 +325,12 @@ function FeaturesV1Editor({
           onChange={(e) => onChange({ ...config, title: e.target.value })}
           className={inputCls}
         />
+        <div className="mt-2">
+          <FeaturesTextStyleField
+            value={config.sectionTitleStyle || {}}
+            onChange={(s) => onChange({ ...config, sectionTitleStyle: { ...config.sectionTitleStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div>
@@ -311,6 +341,12 @@ function FeaturesV1Editor({
           onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
           className={inputCls}
         />
+        <div className="mt-2">
+          <FeaturesTextStyleField
+            value={config.sectionSubtitleStyle || {}}
+            onChange={(s) => onChange({ ...config, sectionSubtitleStyle: { ...config.sectionSubtitleStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -430,6 +466,11 @@ function FeaturesV1Editor({
 function FeaturesBackgroundPicker({ value, onChange }: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
   const { BackgroundPicker } = require('../../shared/background-picker') as { BackgroundPicker: typeof import('../../shared/background-picker').BackgroundPicker };
   return <BackgroundPicker value={value} onChange={onChange} imageFolder="features" />;
+}
+
+function FeaturesTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
+  const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
+  return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
 }
 
 // =====================================================

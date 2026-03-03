@@ -155,14 +155,12 @@ function RichTextV1Editor({
 
       <div>
         <label className="mb-1 block text-sm font-medium">İçerik (HTML)</label>
-        <textarea
-          value={config.content}
-          onChange={(e) => onChange({ ...config, content: e.target.value })}
-          className="h-48 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
-          placeholder="<p>İçeriğinizi buraya yazın...</p>"
+        <RichTextToolbar
+          content={config.content}
+          onChange={(content) => onChange({ ...config, content })}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Not: İleride WYSIWYG editör eklenecektir.
+          İpucu: Metni seçip araç çubuğundaki butonlara tıklayarak biçimlendirin.
         </p>
       </div>
       <div className="grid grid-cols-3 gap-4">
@@ -229,6 +227,12 @@ function RichTextV1Editor({
 function RichTextBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
   const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
   return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="richtext" />;
+}
+
+/** Formatting toolbar wrapper */
+function RichTextToolbar(props: { content: string; onChange: (content: string) => void }) {
+  const { RichTextFormatToolbar } = require('../../shared/rich-text-toolbar') as typeof import('../../shared/rich-text-toolbar');
+  return <RichTextFormatToolbar content={props.content} onChange={props.onChange} />;
 }
 
 // =====================================================

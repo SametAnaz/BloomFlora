@@ -18,11 +18,22 @@ const statItemSchema = z.object({
   suffix: z.string().optional(),
 });
 
+const statsTextStyleSchema = z.object({
+  fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold', 'extrabold']).optional(),
+  fontStyle: z.enum(['normal', 'italic']).optional(),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
+  color: z.string().optional(),
+});
+
 export const statsV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
+  /** Section title style */
+  sectionTitleStyle: statsTextStyleSchema.optional(),
   /** Section subtitle */
   subtitle: z.string().optional(),
+  /** Section subtitle style */
+  sectionSubtitleStyle: statsTextStyleSchema.optional(),
   /** Stat items */
   stats: z.array(statItemSchema).default([]),
   /** Layout style */
@@ -83,6 +94,12 @@ function StatsV1Render({
   const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
   const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
 
+  const twFW: Record<string, string> = { normal: 'font-normal', medium: 'font-medium', semibold: 'font-semibold', bold: 'font-bold', extrabold: 'font-extrabold' };
+  const twFS: Record<string, string> = { normal: 'not-italic', italic: 'italic' };
+  const twDec: Record<string, string> = { none: 'no-underline', underline: 'underline', 'line-through': 'line-through' };
+  type StTS = { fontWeight?: string; fontStyle?: string; textDecoration?: string; color?: string };
+  const bld = (s?: StTS) => !s ? '' : [s.fontWeight && twFW[s.fontWeight], s.fontStyle && twFS[s.fontStyle], s.textDecoration && twDec[s.textDecoration]].filter(Boolean).join(' ');
+
   return (
     <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
       {showOverlay && (
@@ -93,10 +110,14 @@ function StatsV1Render({
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
             {config.title && (
-              <h2 className="text-3xl font-bold md:text-4xl">{config.title}</h2>
+              <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
+                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+              >{config.title}</h2>
             )}
             {config.subtitle && (
-              <p className="mt-3 text-lg text-muted-foreground">
+              <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
+                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+              >
                 {config.subtitle}
               </p>
             )}
@@ -185,6 +206,28 @@ function StatsV1Editor({
           onChange={(e) => onChange({ ...config, title: e.target.value })}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
+        <div className="mt-2">
+          <StatsTextStyleField
+            value={config.sectionTitleStyle || {}}
+            onChange={(s) => onChange({ ...config, sectionTitleStyle: { ...config.sectionTitleStyle, ...s } })}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">Alt Başlık</label>
+        <input
+          type="text"
+          value={config.subtitle || ''}
+          onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+        <div className="mt-2">
+          <StatsTextStyleField
+            value={config.sectionSubtitleStyle || {}}
+            onChange={(s) => onChange({ ...config, sectionSubtitleStyle: { ...config.sectionSubtitleStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -293,6 +336,11 @@ function StatsV1Editor({
 function StatsBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
   const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
   return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="stats" />;
+}
+
+function StatsTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
+  const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
+  return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
 }
 
 // =====================================================

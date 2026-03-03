@@ -22,6 +22,13 @@ const ctaButtonSchema = z.object({
   newTab: z.boolean().optional(),
 });
 
+const ctaTextStyleSchema = z.object({
+  fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold', 'extrabold']).optional(),
+  fontStyle: z.enum(['normal', 'italic']).optional(),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
+  color: z.string().optional(),
+});
+
 export const ctaV1ConfigSchema = z.object({
   /** Title */
   title: z.string().min(1),
@@ -49,6 +56,10 @@ export const ctaV1ConfigSchema = z.object({
   overlayOpacity: z.number().optional(),
   /** Alignment */
   alignment: z.enum(['left', 'center', 'right']).default('center'),
+  /** Title text style */
+  titleStyle: ctaTextStyleSchema.optional(),
+  /** Description text style */
+  descriptionStyle: ctaTextStyleSchema.optional(),
 });
 
 export type CtaV1Config = z.infer<typeof ctaV1ConfigSchema>;
@@ -118,6 +129,20 @@ const btnVariantClasses: Record<string, string> = {
   ghost: 'text-white font-semibold hover:bg-white/10 underline-offset-4 hover:underline',
 };
 
+/** Build CSS classes from cta text style */
+const twFontWeight: Record<string, string> = { normal: 'font-normal', medium: 'font-medium', semibold: 'font-semibold', bold: 'font-bold', extrabold: 'font-extrabold' };
+const twFontStyle: Record<string, string> = { normal: 'not-italic', italic: 'italic' };
+const twDecoration: Record<string, string> = { none: 'no-underline', underline: 'underline', 'line-through': 'line-through' };
+
+function buildCtaTextClass(style?: CtaV1Config['titleStyle']) {
+  if (!style) return '';
+  return [
+    style.fontWeight ? twFontWeight[style.fontWeight] : '',
+    style.fontStyle ? twFontStyle[style.fontStyle] : '',
+    style.textDecoration ? twDecoration[style.textDecoration] : '',
+  ].filter(Boolean).join(' ');
+}
+
 // =====================================================
 // Render Component
 // =====================================================
@@ -161,12 +186,16 @@ function CtaV1Render({
         )}
 
         <div className={`relative z-10 flex flex-col ${alignmentClasses[config.alignment]}`}>
-          <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+          <h2 className={`text-3xl font-bold text-white md:text-4xl lg:text-5xl ${buildCtaTextClass(config.titleStyle)}`}
+            style={config.titleStyle?.color ? { color: config.titleStyle.color } : undefined}
+          >
             {config.title}
           </h2>
 
           {config.description && (
-            <p className="mt-4 max-w-2xl text-lg text-white/90 md:text-xl">
+            <p className={`mt-4 max-w-2xl text-lg text-white/90 md:text-xl ${buildCtaTextClass(config.descriptionStyle)}`}
+              style={config.descriptionStyle?.color ? { color: config.descriptionStyle.color } : undefined}
+            >
               {config.description}
             </p>
           )}
@@ -230,11 +259,23 @@ function CtaV1Editor({
       <div>
         <label className={labelCls}>Başlık</label>
         <input type="text" value={config.title} onChange={(e) => onChange({ ...config, title: e.target.value })} className={inputCls} />
+        <div className="mt-2">
+          <CtaTextStyleField
+            value={config.titleStyle || {}}
+            onChange={(s) => onChange({ ...config, titleStyle: { ...config.titleStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div>
         <label className={labelCls}>Açıklama</label>
         <textarea value={config.description || ''} onChange={(e) => onChange({ ...config, description: e.target.value })} className={inputCls} rows={3} />
+        <div className="mt-2">
+          <CtaTextStyleField
+            value={config.descriptionStyle || {}}
+            onChange={(s) => onChange({ ...config, descriptionStyle: { ...config.descriptionStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div>
@@ -320,6 +361,11 @@ function CtaV1Editor({
 function CtaBackgroundPicker({ value, onChange }: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
   const { BackgroundPicker } = require('../../shared/background-picker') as { BackgroundPicker: typeof import('../../shared/background-picker').BackgroundPicker };
   return <BackgroundPicker value={value} onChange={onChange} imageFolder="cta" />;
+}
+
+function CtaTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
+  const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
+  return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
 }
 
 // =====================================================

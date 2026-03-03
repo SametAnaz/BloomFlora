@@ -28,11 +28,22 @@ const pricingPlanSchema = z.object({
   buttonLink: z.string().optional(),
 });
 
+const pricingTextStyleSchema = z.object({
+  fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold', 'extrabold']).optional(),
+  fontStyle: z.enum(['normal', 'italic']).optional(),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
+  color: z.string().optional(),
+});
+
 export const pricingV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
+  /** Section title style */
+  sectionTitleStyle: pricingTextStyleSchema.optional(),
   /** Section subtitle */
   subtitle: z.string().optional(),
+  /** Section subtitle style */
+  sectionSubtitleStyle: pricingTextStyleSchema.optional(),
   /** Pricing plans */
   plans: z.array(pricingPlanSchema).default([]),
   /** Layout style */
@@ -135,6 +146,12 @@ function PricingV1Render({
   const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
   const showOverlay = needsOverlay(config.background as import('../../shared/background-picker').BackgroundConfig);
 
+  const twFW: Record<string, string> = { normal: 'font-normal', medium: 'font-medium', semibold: 'font-semibold', bold: 'font-bold', extrabold: 'font-extrabold' };
+  const twFS: Record<string, string> = { normal: 'not-italic', italic: 'italic' };
+  const twDec: Record<string, string> = { none: 'no-underline', underline: 'underline', 'line-through': 'line-through' };
+  type PriceTS = { fontWeight?: string; fontStyle?: string; textDecoration?: string; color?: string };
+  const bld = (s?: PriceTS) => !s ? '' : [s.fontWeight && twFW[s.fontWeight], s.fontStyle && twFS[s.fontStyle], s.textDecoration && twDec[s.textDecoration]].filter(Boolean).join(' ');
+
   return (
     <section className="relative py-16 px-4 md:px-8" style={bgStyle}>
       {showOverlay && (
@@ -145,10 +162,14 @@ function PricingV1Render({
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
             {config.title && (
-              <h2 className="text-3xl font-bold md:text-4xl">{config.title}</h2>
+              <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
+                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+              >{config.title}</h2>
             )}
             {config.subtitle && (
-              <p className="mt-3 text-lg text-muted-foreground">{config.subtitle}</p>
+              <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
+                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+              >{config.subtitle}</p>
             )}
           </div>
         )}
@@ -311,6 +332,12 @@ function PricingV1Editor({
           onChange={(e) => onChange({ ...config, title: e.target.value })}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
+        <div className="mt-2">
+          <PricingTextStyleField
+            value={config.sectionTitleStyle || {}}
+            onChange={(s) => onChange({ ...config, sectionTitleStyle: { ...config.sectionTitleStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div>
@@ -321,6 +348,12 @@ function PricingV1Editor({
           onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
+        <div className="mt-2">
+          <PricingTextStyleField
+            value={config.sectionSubtitleStyle || {}}
+            onChange={(s) => onChange({ ...config, sectionSubtitleStyle: { ...config.sectionSubtitleStyle, ...s } })}
+          />
+        </div>
       </div>
 
       <div>
@@ -459,6 +492,11 @@ function PricingV1Editor({
 function PricingBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {
   const { BackgroundPicker } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
   return <BackgroundPicker value={props.value} onChange={props.onChange} imageFolder="pricing" />;
+}
+
+function PricingTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
+  const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
+  return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
 }
 
 // =====================================================

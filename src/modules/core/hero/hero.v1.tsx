@@ -21,6 +21,8 @@ import {
 const textStyleSchema = z.object({
   fontSize: z.enum(['sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl']).optional(),
   fontWeight: z.enum(['normal', 'medium', 'semibold', 'bold', 'extrabold']).optional(),
+  fontStyle: z.enum(['normal', 'italic']).optional(),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).optional(),
   color: z.string().optional(),
 });
 
@@ -130,6 +132,17 @@ const fontWeightClasses: Record<string, string> = {
   extrabold: 'font-extrabold',
 };
 
+const fontStyleClasses: Record<string, string> = {
+  normal: 'not-italic',
+  italic: 'italic',
+};
+
+const textDecorationClasses: Record<string, string> = {
+  none: 'no-underline',
+  underline: 'underline',
+  'line-through': 'line-through',
+};
+
 const variantClasses: Record<string, string> = {
   primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
   secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
@@ -168,8 +181,12 @@ function HeroV1Render({
 
   const titleFontSize = config.titleStyle?.fontSize || '5xl';
   const titleWeight = config.titleStyle?.fontWeight || 'bold';
+  const titleFontStyle = config.titleStyle?.fontStyle || 'normal';
+  const titleDecoration = config.titleStyle?.textDecoration || 'none';
   const subtitleFontSize = config.subtitleStyle?.fontSize || 'xl';
   const subtitleWeight = config.subtitleStyle?.fontWeight || 'normal';
+  const subtitleFontStyle = config.subtitleStyle?.fontStyle || 'normal';
+  const subtitleDecoration = config.subtitleStyle?.textDecoration || 'none';
 
   const textColorBase = config.textColor === 'light' ? 'text-white' : config.textColor === 'dark' ? 'text-gray-900' : '';
   const subtitleColorBase = config.textColor === 'light' ? 'text-white/90' : config.textColor === 'dark' ? 'text-gray-700' : 'text-muted-foreground';
@@ -190,7 +207,7 @@ function HeroV1Render({
       {/* Content */}
       <div className={`container-mobile relative z-10 flex flex-col gap-4 md:gap-6 ${alignmentClasses[config.alignment]}`}>
         <h1
-          className={`${fontSizeClasses[titleFontSize]} ${fontWeightClasses[titleWeight]} ${textColorBase}`}
+          className={`${fontSizeClasses[titleFontSize]} ${fontWeightClasses[titleWeight]} ${fontStyleClasses[titleFontStyle]} ${textDecorationClasses[titleDecoration]} ${textColorBase}`}
           style={{ color: config.titleStyle?.color || undefined }}
         >
           {config.title}
@@ -198,7 +215,7 @@ function HeroV1Render({
 
         {config.subtitle ? (
           <p
-            className={`max-w-2xl ${fontSizeClasses[subtitleFontSize]} ${fontWeightClasses[subtitleWeight]} ${subtitleColorBase}`}
+            className={`max-w-2xl ${fontSizeClasses[subtitleFontSize]} ${fontWeightClasses[subtitleWeight]} ${fontStyleClasses[subtitleFontStyle]} ${textDecorationClasses[subtitleDecoration]} ${subtitleColorBase}`}
             style={{ color: config.subtitleStyle?.color || undefined }}
           >
             {config.subtitle}
@@ -293,7 +310,7 @@ function HeroV1Editor({
           className={inputCls}
         />
         {/* Title text formatting */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-2">
           <div>
             <label className="mb-0.5 block text-xs text-muted-foreground">Boyut</label>
             <select
@@ -312,39 +329,10 @@ function HeroV1Editor({
               <option value="6xl">6XL</option>
             </select>
           </div>
-          <div>
-            <label className="mb-0.5 block text-xs text-muted-foreground">Kalınlık</label>
-            <select
-              value={config.titleStyle?.fontWeight || 'bold'}
-              onChange={(e) => onChange({ ...config, titleStyle: { ...config.titleStyle, fontWeight: e.target.value as 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold' } })}
-              className={selectFieldCls}
-            >
-              <option value="normal">Normal</option>
-              <option value="medium">Orta</option>
-              <option value="semibold">Yarı Kalın</option>
-              <option value="bold">Kalın</option>
-              <option value="extrabold">Çok Kalın</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-0.5 block text-xs text-muted-foreground">Renk</label>
-            <div className="flex items-center gap-1">
-              <input
-                type="color"
-                value={config.titleStyle?.color || '#ffffff'}
-                onChange={(e) => onChange({ ...config, titleStyle: { ...config.titleStyle, color: e.target.value } })}
-                className="h-9 w-10 cursor-pointer rounded border border-input"
-              />
-              <button
-                type="button"
-                onClick={() => onChange({ ...config, titleStyle: { ...config.titleStyle, color: undefined } })}
-                className="rounded border border-input px-2 py-1.5 text-xs hover:bg-accent"
-                title="Varsayılana dön"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+          <HeroTextStyleField
+            value={config.titleStyle || {}}
+            onChange={(s) => onChange({ ...config, titleStyle: { ...config.titleStyle, ...s } })}
+          />
         </div>
       </div>
 
@@ -358,7 +346,7 @@ function HeroV1Editor({
           rows={3}
         />
         {/* Subtitle text formatting */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-2">
           <div>
             <label className="mb-0.5 block text-xs text-muted-foreground">Boyut</label>
             <select
@@ -374,39 +362,10 @@ function HeroV1Editor({
               <option value="3xl">3XL</option>
             </select>
           </div>
-          <div>
-            <label className="mb-0.5 block text-xs text-muted-foreground">Kalınlık</label>
-            <select
-              value={config.subtitleStyle?.fontWeight || 'normal'}
-              onChange={(e) => onChange({ ...config, subtitleStyle: { ...config.subtitleStyle, fontWeight: e.target.value as 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold' } })}
-              className={selectFieldCls}
-            >
-              <option value="normal">Normal</option>
-              <option value="medium">Orta</option>
-              <option value="semibold">Yarı Kalın</option>
-              <option value="bold">Kalın</option>
-              <option value="extrabold">Çok Kalın</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-0.5 block text-xs text-muted-foreground">Renk</label>
-            <div className="flex items-center gap-1">
-              <input
-                type="color"
-                value={config.subtitleStyle?.color || '#ffffff'}
-                onChange={(e) => onChange({ ...config, subtitleStyle: { ...config.subtitleStyle, color: e.target.value } })}
-                className="h-9 w-10 cursor-pointer rounded border border-input"
-              />
-              <button
-                type="button"
-                onClick={() => onChange({ ...config, subtitleStyle: { ...config.subtitleStyle, color: undefined } })}
-                className="rounded border border-input px-2 py-1.5 text-xs hover:bg-accent"
-                title="Varsayılana dön"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+          <HeroTextStyleField
+            value={config.subtitleStyle || {}}
+            onChange={(s) => onChange({ ...config, subtitleStyle: { ...config.subtitleStyle, ...s } })}
+          />
         </div>
       </div>
 
@@ -562,6 +521,11 @@ function HeroV1Editor({
 function HeroBackgroundPicker({ value, onChange }: { value: HeroV1Config['background']; onChange: (bg: HeroV1Config['background']) => void }) {
   const { BackgroundPicker } = require('../../shared/background-picker') as { BackgroundPicker: typeof import('../../shared/background-picker').BackgroundPicker };
   return <BackgroundPicker value={value} onChange={onChange} imageFolder="hero" />;
+}
+
+function HeroTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
+  const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
+  return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
 }
 
 // =====================================================
