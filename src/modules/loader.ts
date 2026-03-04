@@ -11,6 +11,7 @@ import { featuresV1Module } from './core/features';
 import { heroV1Module } from './core/hero';
 import { imageGalleryV1Module } from './core/imageGallery';
 import { logosV1Module } from './core/logos';
+import { mapV1Module } from './core/map';
 import { pricingV1Module } from './core/pricing';
 import { richTextV1Module } from './core/richText';
 import { statsV1Module } from './core/stats';
@@ -51,6 +52,7 @@ export function initializeModules(): void {
 
   // Register contact modules
   registerModule(contactFormV1Module);
+  registerModule(mapV1Module);
 
   // Register catalog modules
   registerModule(pricingV1Module);
@@ -66,7 +68,7 @@ export function initializeModules(): void {
 
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable-next-line no-console
-    console.info('[Modules] Initialized with 14 modules');
+    console.info('[Modules] Initialized with 15 modules');
   }
 }
 

@@ -21,6 +21,7 @@ export * from './logos';
 
 // Contact modules
 export * from './contactForm';
+export * from './map';
 
 // Catalog modules
 export * from './pricing';
