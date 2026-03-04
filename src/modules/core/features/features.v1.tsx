@@ -3,6 +3,8 @@
  * Grid of features with icons, titles and descriptions
  */
 
+import * as React from 'react';
+
 import { z } from 'zod';
 
 import type { ModuleDefinition } from '../../types';
@@ -25,6 +27,11 @@ const featuresTextStyleSchema = z.object({
   color: z.string().optional(),
 });
 
+const positionSchema = z.object({
+  x: z.number().min(0).max(100).default(50),
+  y: z.number().min(0).max(100).default(50),
+});
+
 export const featuresV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
@@ -34,6 +41,10 @@ export const featuresV1ConfigSchema = z.object({
   subtitle: z.string().optional(),
   /** Section subtitle style */
   sectionSubtitleStyle: featuresTextStyleSchema.optional(),
+  /** Title drag position */
+  titlePosition: positionSchema.optional(),
+  /** Subtitle drag position */
+  subtitlePosition: positionSchema.optional(),
   /** Feature items */
   features: z.array(featureItemSchema).default([]),
   /** Grid columns */
@@ -190,11 +201,21 @@ function buildFeatTextClass(s?: FeatTextStyle) {
 
 function FeaturesV1Render({
   block,
+  isPreview,
 }: {
-  block: { config: FeaturesV1Config };
+  block: { config: FeaturesV1Config; id?: string };
   isPreview?: boolean;
 }) {
   const { config } = block;
+
+  // Drag positioning support
+  const onCfg = isPreview && typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__bloomBlockConfigChange as ((blockId: string, cfg: Record<string, unknown>) => void) | undefined : undefined;
+  const blockId = (block as Record<string, unknown>).id as string | undefined;
+  const canDrag = isPreview && !!onCfg && !!blockId;
+
+  const updatePos = (key: string) => (pos: { x: number; y: number }) => {
+    if (canDrag) onCfg!(blockId!, { ...config, [key]: pos } as unknown as Record<string, unknown>);
+  };
 
   const gridCols: Record<string, string> = {
     '2': 'md:grid-cols-2',
@@ -218,14 +239,26 @@ function FeaturesV1Render({
         {(config.title || config.subtitle) && (
           <div className={`mb-12 ${config.alignment === 'center' ? 'text-center' : ''}`}>
             {config.title && (
-              <h2 className={`text-3xl font-bold md:text-4xl ${buildFeatTextClass(config.sectionTitleStyle)}`}
-                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
-              >{config.title}</h2>
+              <FeaturesDraggableBox
+                position={config.titlePosition}
+                onPositionChange={canDrag ? updatePos('titlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <h2 className={`text-3xl font-bold md:text-4xl ${buildFeatTextClass(config.sectionTitleStyle)}`}
+                  style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+                >{config.title}</h2>
+              </FeaturesDraggableBox>
             )}
             {config.subtitle && (
-              <p className={`mt-3 text-lg text-muted-foreground ${buildFeatTextClass(config.sectionSubtitleStyle)}`}
-                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
-              >{config.subtitle}</p>
+              <FeaturesDraggableBox
+                position={config.subtitlePosition}
+                onPositionChange={canDrag ? updatePos('subtitlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <p className={`mt-3 text-lg text-muted-foreground ${buildFeatTextClass(config.sectionSubtitleStyle)}`}
+                  style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+                >{config.subtitle}</p>
+              </FeaturesDraggableBox>
             )}
           </div>
         )}
@@ -471,6 +504,11 @@ function FeaturesBackgroundPicker({ value, onChange }: { value: import('../../sh
 function FeaturesTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
   return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
+}
+
+function FeaturesDraggableBox(props: { children: React.ReactNode; position?: { x: number; y: number } | null; onPositionChange?: (pos: { x: number; y: number }) => void; isPreview: boolean }) {
+  const { DraggableTextBox } = require('../../shared/draggable-text-box') as typeof import('../../shared/draggable-text-box');
+  return <DraggableTextBox {...props} />;
 }
 
 // =====================================================

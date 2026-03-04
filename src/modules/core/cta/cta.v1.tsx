@@ -29,6 +29,11 @@ const ctaTextStyleSchema = z.object({
   color: z.string().optional(),
 });
 
+const positionSchema = z.object({
+  x: z.number().min(0).max(100).default(50),
+  y: z.number().min(0).max(100).default(50),
+});
+
 export const ctaV1ConfigSchema = z.object({
   /** Title */
   title: z.string().min(1),
@@ -60,6 +65,12 @@ export const ctaV1ConfigSchema = z.object({
   titleStyle: ctaTextStyleSchema.optional(),
   /** Description text style */
   descriptionStyle: ctaTextStyleSchema.optional(),
+  /** Title drag position */
+  titlePosition: positionSchema.optional(),
+  /** Description drag position */
+  descriptionPosition: positionSchema.optional(),
+  /** Buttons drag position */
+  buttonsPosition: positionSchema.optional(),
 });
 
 export type CtaV1Config = z.infer<typeof ctaV1ConfigSchema>;
@@ -151,12 +162,21 @@ function CtaV1Render({
   block,
   isPreview,
 }: {
-  block: { config: CtaV1Config };
+  block: { config: CtaV1Config; id?: string };
   isPreview?: boolean;
 }) {
   const { config } = block;
   const buttons = resolveCtaButtons(config);
   const bg = resolveCtaBackground(config);
+
+  // Drag positioning support
+  const onCfg = isPreview && typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__bloomBlockConfigChange as ((blockId: string, cfg: Record<string, unknown>) => void) | undefined : undefined;
+  const blockId = (block as Record<string, unknown>).id as string | undefined;
+  const canDrag = isPreview && !!onCfg && !!blockId;
+
+  const updatePos = (key: string) => (pos: { x: number; y: number }) => {
+    if (canDrag) onCfg!(blockId!, { ...config, [key]: pos } as unknown as Record<string, unknown>);
+  };
 
   const alignmentClasses: Record<string, string> = {
     left: 'text-left items-start',
@@ -186,33 +206,51 @@ function CtaV1Render({
         )}
 
         <div className={`relative z-10 flex flex-col ${alignmentClasses[config.alignment]}`}>
-          <h2 className={`text-3xl font-bold text-white md:text-4xl lg:text-5xl ${buildCtaTextClass(config.titleStyle)}`}
-            style={config.titleStyle?.color ? { color: config.titleStyle.color } : undefined}
+          <CtaDraggableBox
+            position={config.titlePosition}
+            onPositionChange={canDrag ? updatePos('titlePosition') : undefined}
+            isPreview={!!isPreview}
           >
-            {config.title}
-          </h2>
+            <h2 className={`text-3xl font-bold text-white md:text-4xl lg:text-5xl ${buildCtaTextClass(config.titleStyle)}`}
+              style={config.titleStyle?.color ? { color: config.titleStyle.color } : undefined}
+            >
+              {config.title}
+            </h2>
+          </CtaDraggableBox>
 
           {config.description && (
-            <p className={`mt-4 max-w-2xl text-lg text-white/90 md:text-xl ${buildCtaTextClass(config.descriptionStyle)}`}
-              style={config.descriptionStyle?.color ? { color: config.descriptionStyle.color } : undefined}
+            <CtaDraggableBox
+              position={config.descriptionPosition}
+              onPositionChange={canDrag ? updatePos('descriptionPosition') : undefined}
+              isPreview={!!isPreview}
             >
-              {config.description}
-            </p>
+              <p className={`mt-4 max-w-2xl text-lg text-white/90 md:text-xl ${buildCtaTextClass(config.descriptionStyle)}`}
+                style={config.descriptionStyle?.color ? { color: config.descriptionStyle.color } : undefined}
+              >
+                {config.description}
+              </p>
+            </CtaDraggableBox>
           )}
 
           {buttons.length > 0 && (
-            <div className={`mt-8 flex flex-col gap-4 sm:flex-row ${
-              config.alignment === 'center' ? 'justify-center' : config.alignment === 'right' ? 'justify-end' : ''
-            }`}>
-              {buttons.map((btn, i) => {
-                const cls = `inline-flex items-center justify-center rounded-lg px-6 py-3 transition-transform ${btnVariantClasses[btn.variant || 'white']}`;
-                return isPreview ? (
-                  <span key={btn.id || i} className={cls} role="button" tabIndex={0}>{btn.text}</span>
-                ) : (
-                  <a key={btn.id || i} href={btn.link} className={cls} target={btn.newTab ? '_blank' : undefined} rel={btn.newTab ? 'noopener noreferrer' : undefined}>{btn.text}</a>
-                );
-              })}
-            </div>
+            <CtaDraggableBox
+              position={config.buttonsPosition}
+              onPositionChange={canDrag ? updatePos('buttonsPosition') : undefined}
+              isPreview={!!isPreview}
+            >
+              <div className={`mt-8 flex flex-col gap-4 sm:flex-row ${
+                config.alignment === 'center' ? 'justify-center' : config.alignment === 'right' ? 'justify-end' : ''
+              }`}>
+                {buttons.map((btn, i) => {
+                  const cls = `inline-flex items-center justify-center rounded-lg px-6 py-3 transition-transform ${btnVariantClasses[btn.variant || 'white']}`;
+                  return isPreview ? (
+                    <span key={btn.id || i} className={cls} role="button" tabIndex={0}>{btn.text}</span>
+                  ) : (
+                    <a key={btn.id || i} href={btn.link} className={cls} target={btn.newTab ? '_blank' : undefined} rel={btn.newTab ? 'noopener noreferrer' : undefined}>{btn.text}</a>
+                  );
+                })}
+              </div>
+            </CtaDraggableBox>
           )}
         </div>
       </div>
@@ -366,6 +404,11 @@ function CtaBackgroundPicker({ value, onChange }: { value: import('../../shared/
 function CtaTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
   return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
+}
+
+function CtaDraggableBox(props: { children: React.ReactNode; position?: { x: number; y: number } | null; onPositionChange?: (pos: { x: number; y: number }) => void; isPreview: boolean }) {
+  const { DraggableTextBox } = require('../../shared/draggable-text-box') as typeof import('../../shared/draggable-text-box');
+  return <DraggableTextBox {...props} />;
 }
 
 // =====================================================

@@ -26,6 +26,11 @@ const textStyleSchema = z.object({
   color: z.string().optional(),
 });
 
+const positionSchema = z.object({
+  x: z.number().min(0).max(100).default(50),
+  y: z.number().min(0).max(100).default(50),
+});
+
 const heroButtonSchema = linkConfigSchema.extend({
   id: z.string().optional(),
 });
@@ -35,14 +40,20 @@ export const heroV1ConfigSchema = z.object({
   title: z.string().min(1),
   /** Title text style */
   titleStyle: textStyleSchema.optional(),
+  /** Title position (drag) */
+  titlePosition: positionSchema.optional(),
   /** Subtitle/description text */
   subtitle: z.string().optional(),
   /** Subtitle text style */
   subtitleStyle: textStyleSchema.optional(),
+  /** Subtitle position (drag) */
+  subtitlePosition: positionSchema.optional(),
   /** Text alignment */
   alignment: z.enum(['left', 'center', 'right']).default('center'),
   /** CTA buttons (dynamic list) */
   buttons: z.array(heroButtonSchema).default([]),
+  /** Buttons position (drag) */
+  buttonsPosition: positionSchema.optional(),
   /** Primary CTA button (legacy — kept for backward compat) */
   primaryCta: linkConfigSchema.optional(),
   /** Secondary CTA button (legacy) */
@@ -159,11 +170,20 @@ function HeroV1Render({
   block,
   isPreview,
 }: {
-  block: { config: HeroV1Config };
+  block: { config: HeroV1Config; id?: string };
   isPreview?: boolean;
 }) {
   const { config } = block;
   const buttons = resolveButtons(config);
+
+  // If preview, try to get live config updater from window (set by page-builder)
+  const onCfg = isPreview && typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__bloomBlockConfigChange as ((blockId: string, cfg: Record<string, unknown>) => void) | undefined : undefined;
+  const blockId = (block as Record<string, unknown>).id as string | undefined;
+  const canDrag = isPreview && !!onCfg && !!blockId;
+
+  const updatePos = (key: string) => (pos: { x: number; y: number }) => {
+    if (canDrag) onCfg!(blockId!, { ...config, [key]: pos } as unknown as Record<string, unknown>);
+  };
 
   const heightClasses: Record<string, string> = {
     auto: 'py-16 md:py-24',
@@ -206,25 +226,42 @@ function HeroV1Render({
 
       {/* Content */}
       <div className={`container-mobile relative z-10 flex flex-col gap-4 md:gap-6 ${alignmentClasses[config.alignment]}`}>
-        <h1
-          className={`${fontSizeClasses[titleFontSize]} ${fontWeightClasses[titleWeight]} ${fontStyleClasses[titleFontStyle]} ${textDecorationClasses[titleDecoration]} ${textColorBase}`}
-          style={{ color: config.titleStyle?.color || undefined }}
+        <HeroDraggableBox
+          position={config.titlePosition}
+          onPositionChange={canDrag ? updatePos('titlePosition') : undefined}
+          isPreview={!!isPreview}
         >
-          {config.title}
-        </h1>
+          <h1
+            className={`${fontSizeClasses[titleFontSize]} ${fontWeightClasses[titleWeight]} ${fontStyleClasses[titleFontStyle]} ${textDecorationClasses[titleDecoration]} ${textColorBase}`}
+            style={{ color: config.titleStyle?.color || undefined }}
+          >
+            {config.title}
+          </h1>
+        </HeroDraggableBox>
 
         {config.subtitle ? (
-          <p
-            className={`max-w-2xl ${fontSizeClasses[subtitleFontSize]} ${fontWeightClasses[subtitleWeight]} ${fontStyleClasses[subtitleFontStyle]} ${textDecorationClasses[subtitleDecoration]} ${subtitleColorBase}`}
-            style={{ color: config.subtitleStyle?.color || undefined }}
+          <HeroDraggableBox
+            position={config.subtitlePosition}
+            onPositionChange={canDrag ? updatePos('subtitlePosition') : undefined}
+            isPreview={!!isPreview}
           >
-            {config.subtitle}
-          </p>
+            <p
+              className={`max-w-2xl ${fontSizeClasses[subtitleFontSize]} ${fontWeightClasses[subtitleWeight]} ${fontStyleClasses[subtitleFontStyle]} ${textDecorationClasses[subtitleDecoration]} ${subtitleColorBase}`}
+              style={{ color: config.subtitleStyle?.color || undefined }}
+            >
+              {config.subtitle}
+            </p>
+          </HeroDraggableBox>
         ) : null}
 
         {/* CTA Buttons */}
         {buttons.length > 0 ? (
-          <div className={`mt-4 flex flex-wrap gap-3 ${config.alignment === 'center' ? 'justify-center' : config.alignment === 'right' ? 'justify-end' : ''}`}>
+          <HeroDraggableBox
+            position={config.buttonsPosition}
+            onPositionChange={canDrag ? updatePos('buttonsPosition') : undefined}
+            isPreview={!!isPreview}
+          >
+            <div className={`mt-4 flex flex-wrap gap-3 ${config.alignment === 'center' ? 'justify-center' : config.alignment === 'right' ? 'justify-end' : ''}`}>
             {buttons.map((btn, i) => {
               const cls = `inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-medium transition-colors ${variantClasses[btn.variant || 'primary']}`;
               return isPreview ? (
@@ -243,7 +280,8 @@ function HeroV1Render({
                 </a>
               );
             })}
-          </div>
+            </div>
+          </HeroDraggableBox>
         ) : null}
       </div>
     </section>
@@ -526,6 +564,11 @@ function HeroBackgroundPicker({ value, onChange }: { value: HeroV1Config['backgr
 function HeroTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
   return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
+}
+
+function HeroDraggableBox(props: { children: React.ReactNode; position?: { x: number; y: number } | null; onPositionChange?: (pos: { x: number; y: number }) => void; isPreview: boolean }) {
+  const { DraggableTextBox } = require('../../shared/draggable-text-box') as typeof import('../../shared/draggable-text-box');
+  return <DraggableTextBox {...props} />;
 }
 
 // =====================================================

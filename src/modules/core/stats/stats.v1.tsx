@@ -3,6 +3,8 @@
  * Statistics/counters section
  */
 
+import * as React from 'react';
+
 import { z } from 'zod';
 
 import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
@@ -25,6 +27,11 @@ const statsTextStyleSchema = z.object({
   color: z.string().optional(),
 });
 
+const positionSchema = z.object({
+  x: z.number().min(0).max(100).default(50),
+  y: z.number().min(0).max(100).default(50),
+});
+
 export const statsV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
@@ -34,6 +41,10 @@ export const statsV1ConfigSchema = z.object({
   subtitle: z.string().optional(),
   /** Section subtitle style */
   sectionSubtitleStyle: statsTextStyleSchema.optional(),
+  /** Title drag position */
+  titlePosition: positionSchema.optional(),
+  /** Subtitle drag position */
+  subtitlePosition: positionSchema.optional(),
   /** Stat items */
   stats: z.array(statItemSchema).default([]),
   /** Layout style */
@@ -84,11 +95,21 @@ export const statsV1Meta = {
 
 function StatsV1Render({
   block,
+  isPreview,
 }: {
-  block: { config: StatsV1Config };
+  block: { config: StatsV1Config; id?: string };
   isPreview?: boolean;
 }) {
   const { config } = block;
+
+  // Drag positioning support
+  const onCfg = isPreview && typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__bloomBlockConfigChange as ((blockId: string, cfg: Record<string, unknown>) => void) | undefined : undefined;
+  const blockId = (block as Record<string, unknown>).id as string | undefined;
+  const canDrag = isPreview && !!onCfg && !!blockId;
+
+  const updatePos = (key: string) => (pos: { x: number; y: number }) => {
+    if (canDrag) onCfg!(blockId!, { ...config, [key]: pos } as unknown as Record<string, unknown>);
+  };
 
   const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
   const bgStyle = getBackgroundStyle(config.background as import('../../shared/background-picker').BackgroundConfig);
@@ -110,16 +131,28 @@ function StatsV1Render({
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
             {config.title && (
-              <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
-                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
-              >{config.title}</h2>
+              <StatsDraggableBox
+                position={config.titlePosition}
+                onPositionChange={canDrag ? updatePos('titlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
+                  style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+                >{config.title}</h2>
+              </StatsDraggableBox>
             )}
             {config.subtitle && (
-              <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
-                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+              <StatsDraggableBox
+                position={config.subtitlePosition}
+                onPositionChange={canDrag ? updatePos('subtitlePosition') : undefined}
+                isPreview={!!isPreview}
               >
-                {config.subtitle}
-              </p>
+                <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
+                  style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+                >
+                  {config.subtitle}
+                </p>
+              </StatsDraggableBox>
             )}
           </div>
         )}
@@ -341,6 +374,11 @@ function StatsBackgroundPicker(props: { value: import('../../shared/background-p
 function StatsTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
   return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
+}
+
+function StatsDraggableBox(props: { children: React.ReactNode; position?: { x: number; y: number } | null; onPositionChange?: (pos: { x: number; y: number }) => void; isPreview: boolean }) {
+  const { DraggableTextBox } = require('../../shared/draggable-text-box') as typeof import('../../shared/draggable-text-box');
+  return <DraggableTextBox {...props} />;
 }
 
 // =====================================================

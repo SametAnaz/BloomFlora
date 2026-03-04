@@ -3,6 +3,8 @@
  * Frequently Asked Questions accordion
  */
 
+import * as React from 'react';
+
 import { z } from 'zod';
 
 import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
@@ -23,6 +25,11 @@ const faqTextStyleSchema = z.object({
   color: z.string().optional(),
 });
 
+const positionSchema = z.object({
+  x: z.number().min(0).max(100).default(50),
+  y: z.number().min(0).max(100).default(50),
+});
+
 export const faqV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
@@ -32,6 +39,10 @@ export const faqV1ConfigSchema = z.object({
   subtitle: z.string().optional(),
   /** Section subtitle style */
   sectionSubtitleStyle: faqTextStyleSchema.optional(),
+  /** Title drag position */
+  titlePosition: positionSchema.optional(),
+  /** Subtitle drag position */
+  subtitlePosition: positionSchema.optional(),
   /** FAQ items */
   items: z.array(faqItemSchema).default([]),
   /** Layout style */
@@ -135,11 +146,21 @@ function FaqAccordionItem({
 
 function FaqV1Render({
   block,
+  isPreview,
 }: {
-  block: { config: FaqV1Config };
+  block: { config: FaqV1Config; id?: string };
   isPreview?: boolean;
 }) {
   const { config } = block;
+
+  // Drag positioning support
+  const onCfg = isPreview && typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__bloomBlockConfigChange as ((blockId: string, cfg: Record<string, unknown>) => void) | undefined : undefined;
+  const blockId = (block as Record<string, unknown>).id as string | undefined;
+  const canDrag = isPreview && !!onCfg && !!blockId;
+
+  const updatePos = (key: string) => (pos: { x: number; y: number }) => {
+    if (canDrag) onCfg!(blockId!, { ...config, [key]: pos } as unknown as Record<string, unknown>);
+  };
 
   // Simple state for accordion - in real app would use React state
   // For SSR/preview, show all expanded
@@ -165,14 +186,26 @@ function FaqV1Render({
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
             {config.title && (
-              <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
-                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
-              >{config.title}</h2>
+              <FaqDraggableBox
+                position={config.titlePosition}
+                onPositionChange={canDrag ? updatePos('titlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
+                  style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+                >{config.title}</h2>
+              </FaqDraggableBox>
             )}
             {config.subtitle && (
-              <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
-                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
-              >{config.subtitle}</p>
+              <FaqDraggableBox
+                position={config.subtitlePosition}
+                onPositionChange={canDrag ? updatePos('subtitlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
+                  style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+                >{config.subtitle}</p>
+              </FaqDraggableBox>
             )}
           </div>
         )}
@@ -381,6 +414,11 @@ function FaqV1Editor({
 function FaqTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
   return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
+}
+
+function FaqDraggableBox(props: { children: React.ReactNode; position?: { x: number; y: number } | null; onPositionChange?: (pos: { x: number; y: number }) => void; isPreview: boolean }) {
+  const { DraggableTextBox } = require('../../shared/draggable-text-box') as typeof import('../../shared/draggable-text-box');
+  return <DraggableTextBox {...props} />;
 }
 
 function FaqBackgroundPicker(props: { value: import('../../shared/background-picker').BackgroundConfig; onChange: (bg: import('../../shared/background-picker').BackgroundConfig) => void }) {

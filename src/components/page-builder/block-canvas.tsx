@@ -187,7 +187,7 @@ export function BlockCanvas({
           {/* Block Preview */}
           <div
             onClick={() => onSelectBlock(block.id)}
-            className="cursor-pointer overflow-hidden rounded-lg"
+            className="cursor-pointer rounded-lg"
           >
             <BlockRenderer
               block={toBlockInstance(block)}

@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -59,6 +59,24 @@ export function PageBuilder({ initialPage }: PageBuilderProps) {
     );
     setHasChanges(true);
   }, [selectedBlockId]);
+
+  // Direct config update from any block (used by drag positioning inside render components)
+  const handleDirectBlockConfigChange = useCallback((blockId: string, config: Record<string, unknown>) => {
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId ? { ...block, config } : block
+      )
+    );
+    setHasChanges(true);
+  }, []);
+
+  // Expose the direct updater globally so render components can call it during drag
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>).__bloomBlockConfigChange = handleDirectBlockConfigChange;
+    return () => {
+      delete (window as unknown as Record<string, unknown>).__bloomBlockConfigChange;
+    };
+  }, [handleDirectBlockConfigChange]);
 
   // Move block
   const handleMoveBlock = useCallback((fromIndex: number, toIndex: number) => {

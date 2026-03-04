@@ -3,6 +3,8 @@
  * Pricing tables and plans
  */
 
+import * as React from 'react';
+
 import { z } from 'zod';
 
 import { backgroundConfigSchema, type ModuleDefinition } from '../../types';
@@ -35,6 +37,11 @@ const pricingTextStyleSchema = z.object({
   color: z.string().optional(),
 });
 
+const positionSchema = z.object({
+  x: z.number().min(0).max(100).default(50),
+  y: z.number().min(0).max(100).default(50),
+});
+
 export const pricingV1ConfigSchema = z.object({
   /** Section title */
   title: z.string().optional(),
@@ -44,6 +51,10 @@ export const pricingV1ConfigSchema = z.object({
   subtitle: z.string().optional(),
   /** Section subtitle style */
   sectionSubtitleStyle: pricingTextStyleSchema.optional(),
+  /** Title drag position */
+  titlePosition: positionSchema.optional(),
+  /** Subtitle drag position */
+  subtitlePosition: positionSchema.optional(),
   /** Pricing plans */
   plans: z.array(pricingPlanSchema).default([]),
   /** Layout style */
@@ -130,11 +141,21 @@ export const pricingV1Meta = {
 
 function PricingV1Render({
   block,
+  isPreview,
 }: {
-  block: { config: PricingV1Config };
+  block: { config: PricingV1Config; id?: string };
   isPreview?: boolean;
 }) {
   const { config } = block;
+
+  // Drag positioning support
+  const onCfg = isPreview && typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>).__bloomBlockConfigChange as ((blockId: string, cfg: Record<string, unknown>) => void) | undefined : undefined;
+  const blockId = (block as Record<string, unknown>).id as string | undefined;
+  const canDrag = isPreview && !!onCfg && !!blockId;
+
+  const updatePos = (key: string) => (pos: { x: number; y: number }) => {
+    if (canDrag) onCfg!(blockId!, { ...config, [key]: pos } as unknown as Record<string, unknown>);
+  };
 
   const gridCols: Record<string, string> = {
     '2': 'md:grid-cols-2',
@@ -162,14 +183,26 @@ function PricingV1Render({
         {(config.title || config.subtitle) && (
           <div className="mb-12 text-center">
             {config.title && (
-              <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
-                style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
-              >{config.title}</h2>
+              <PricingDraggableBox
+                position={config.titlePosition}
+                onPositionChange={canDrag ? updatePos('titlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <h2 className={`text-3xl font-bold md:text-4xl ${bld(config.sectionTitleStyle)}`}
+                  style={config.sectionTitleStyle?.color ? { color: config.sectionTitleStyle.color } : undefined}
+                >{config.title}</h2>
+              </PricingDraggableBox>
             )}
             {config.subtitle && (
-              <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
-                style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
-              >{config.subtitle}</p>
+              <PricingDraggableBox
+                position={config.subtitlePosition}
+                onPositionChange={canDrag ? updatePos('subtitlePosition') : undefined}
+                isPreview={!!isPreview}
+              >
+                <p className={`mt-3 text-lg text-muted-foreground ${bld(config.sectionSubtitleStyle)}`}
+                  style={config.sectionSubtitleStyle?.color ? { color: config.sectionSubtitleStyle.color } : undefined}
+                >{config.subtitle}</p>
+              </PricingDraggableBox>
             )}
           </div>
         )}
@@ -497,6 +530,11 @@ function PricingBackgroundPicker(props: { value: import('../../shared/background
 function PricingTextStyleField({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const { TextStyleField } = require('../../shared/text-style-field') as typeof import('../../shared/text-style-field');
   return <TextStyleField value={value as import('../../shared/text-style-field').TextStyleFieldValue} onChange={onChange as (v: import('../../shared/text-style-field').TextStyleFieldValue) => void} />;
+}
+
+function PricingDraggableBox(props: { children: React.ReactNode; position?: { x: number; y: number } | null; onPositionChange?: (pos: { x: number; y: number }) => void; isPreview: boolean }) {
+  const { DraggableTextBox } = require('../../shared/draggable-text-box') as typeof import('../../shared/draggable-text-box');
+  return <DraggableTextBox {...props} />;
 }
 
 // =====================================================
