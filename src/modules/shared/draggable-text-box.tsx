@@ -1,10 +1,8 @@
 /**
  * DraggableTextBox — admin preview modunda metin öğelerini sürükle-bırak ile konumlandırır.
  *
- * Yaklaşım: `position: relative` + `transform: translate(px, px)`.
- * Referans eleman: en yakın <section> (hem sürükleme hem render için tutarlı).
- * position.x=50, position.y=50 → offset yok (varsayılan).
- * position.x=60 → sağa %10, position.y=40 → yukarı %10.
+ * Public sitede offset yoksa sıfır overhead — sadece children render eder.
+ * Offset varsa veya isPreview ise DraggableTextBoxInner devreye girer.
  */
 
 'use client';
@@ -22,12 +20,11 @@ export type TextPosition = z.infer<typeof textPositionSchema>;
 export const defaultTextPosition: TextPosition = { x: 50, y: 50 };
 
 // ─── Helpers ─────────────────────────────────────────
-/** Find the nearest <section> ancestor or fall back to parentElement */
 function getRefElement(el: HTMLElement): HTMLElement {
   return (el.closest('section') as HTMLElement) ?? el.parentElement ?? el;
 }
 
-// ─── Component ───────────────────────────────────────
+// ─── Public API ──────────────────────────────────────
 interface DraggableTextBoxProps {
   children: React.ReactNode;
   position?: TextPosition | null;
@@ -36,7 +33,40 @@ interface DraggableTextBoxProps {
   className?: string;
 }
 
+/**
+ * Lightweight wrapper — returns plain div when no offset & not preview.
+ * Zero hooks, zero ResizeObserver on public site for default-position boxes.
+ */
 export function DraggableTextBox({
+  children,
+  position,
+  onPositionChange,
+  isPreview = false,
+  className = '',
+}: DraggableTextBoxProps) {
+  const posX = position?.x ?? 50;
+  const posY = position?.y ?? 50;
+  const hasOffset = posX !== 50 || posY !== 50;
+
+  // Fast path: no offset, not preview → plain div, zero overhead
+  if (!hasOffset && !isPreview) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <DraggableTextBoxInner
+      position={position}
+      onPositionChange={onPositionChange}
+      isPreview={isPreview}
+      className={className}
+    >
+      {children}
+    </DraggableTextBoxInner>
+  );
+}
+
+// ─── Inner component (hooks only when actually needed) ──
+function DraggableTextBoxInner({
   children,
   position,
   onPositionChange,
@@ -47,46 +77,43 @@ export function DraggableTextBox({
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const didDragRef = useRef(false);
-  const isDraggingRef = useRef(false); // ref to prevent React re-render from resetting inline styles
-
-  // Reference element dimensions (section) for consistent drag ↔ render
-  const refSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+  const isDraggingRef = useRef(false);
 
   const posX = position?.x ?? 50;
   const posY = position?.y ?? 50;
-  const offsetX = posX - 50;
-  const offsetY = posY - 50;
-  const hasOffset = offsetX !== 0 || offsetY !== 0;
+  const hasOffset = posX !== 50 || posY !== 50;
 
-  // ─────── Measure reference element (section) ──────
+  // ─────── Measure & apply transform via DOM ─────────
   useLayoutEffect(() => {
     const el = boxRef.current;
     if (!el) return;
+
+    // No offset, no need for ResizeObserver — just clear transform
+    if (!hasOffset) {
+      el.style.transform = '';
+      return;
+    }
+
     const ref = getRefElement(el);
-
-    const measure = () => {
-      refSizeRef.current = { w: ref.offsetWidth, h: ref.offsetHeight };
-      // Update inline style if not currently dragging
-      if (!isDraggingRef.current && el) {
-        const ox = (posX - 50);
-        const oy = (posY - 50);
-        if (ox !== 0 || oy !== 0) {
-          const px = (ox / 100) * refSizeRef.current.w;
-          const py = (oy / 100) * refSizeRef.current.h;
-          el.style.transform = `translate(${px}px, ${py}px)`;
-        } else {
-          el.style.transform = '';
-        }
-      }
+    const applyTransform = () => {
+      if (isDraggingRef.current) return;
+      const ox = posX - 50;
+      const oy = posY - 50;
+      const px = (ox / 100) * ref.offsetWidth;
+      const py = (oy / 100) * ref.offsetHeight;
+      el.style.transform = `translate(${px}px, ${py}px)`;
     };
-    measure();
+    applyTransform();
 
-    const ro = new ResizeObserver(measure);
+    // Only observe resize in admin preview (public pages don't resize interactively)
+    if (!isPreview) return;
+
+    const ro = new ResizeObserver(applyTransform);
     ro.observe(ref);
     return () => ro.disconnect();
-  }, [posX, posY]);
+  }, [posX, posY, hasOffset, isPreview]);
 
-  // ─────── Pointer handlers ──────────────────────────
+  // ─────── Pointer handlers (admin only) ─────────────
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!isPreview || !onPositionChange) return;
@@ -118,7 +145,6 @@ export function DraggableTextBox({
         const newX = dragStart.current.origX + (dx / refRect.width) * 100;
         const newY = dragStart.current.origY + (dy / refRect.height) * 100;
 
-        // Pixel offset using same reference dimensions as render
         const newPxX = ((newX - 50) / 100) * refRect.width;
         const newPxY = ((newY - 50) / 100) * refRect.height;
         if (el) {
@@ -153,7 +179,6 @@ export function DraggableTextBox({
     [isPreview, onPositionChange, posX, posY],
   );
 
-  // ─────── Reset ─────────────────────────────────────
   const handleReset = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -162,13 +187,11 @@ export function DraggableTextBox({
     [onPositionChange],
   );
 
-  // Block native HTML5 drag from bubbling to parent <div draggable> in BlockCanvas
   const stopNativeDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
 
-  // Prevent click from bubbling up after a drag (would trigger block selection in BlockCanvas)
   const handleClickCapture = useCallback((e: React.MouseEvent) => {
     if (didDragRef.current) {
       e.stopPropagation();
@@ -177,29 +200,17 @@ export function DraggableTextBox({
     }
   }, []);
 
-  // ─────── Plain render (no offset, not preview) ────
-  if (!hasOffset && !isPreview) {
-    return <div className={className}>{children}</div>;
-  }
-
-  // Transform is applied via useLayoutEffect + ResizeObserver (not via React style)
-  // to keep drag ↔ render consistent and avoid React re-render conflicts during drag
-  const style: React.CSSProperties = {
-    position: 'relative',
-  };
-
   return (
     <div
       ref={boxRef}
       className={`draggable-text-box group/dtb ${className} ${isPreview ? 'select-none' : ''}`}
-      style={style}
+      style={{ position: 'relative' }}
       draggable={false}
       onDragStart={stopNativeDrag}
       onClickCapture={handleClickCapture}
     >
       {children}
 
-      {/* Drag handle — only visible in admin preview */}
       {isPreview && onPositionChange && (
         <div
           className={`
@@ -242,7 +253,6 @@ export function DraggableTextBox({
         </div>
       )}
 
-      {/* Visible outline when hovered in preview */}
       {isPreview && onPositionChange && (
         <div
           className={`
