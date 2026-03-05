@@ -133,8 +133,8 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
       lines.push(`   Adet: ${item.quantity} × ${(item.price ?? 0).toFixed(2)} ₺ = *${lineTotal.toFixed(2)} ₺*`);
       if (item.giftCardText) lines.push(`   🎁 Kart Notu: ${item.giftCardText}`);
       if (item.customAttributes.length > 0) {
-        item.customAttributes.forEach((attr: { key: string; value: string }) => {
-          lines.push(`   • ${attr.key}: ${attr.value}`);
+        item.customAttributes.forEach((attr) => {
+          lines.push(`   • ${attr.name}: ${attr.value}`);
         });
       }
       lines.push('');
