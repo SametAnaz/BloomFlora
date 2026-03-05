@@ -138,8 +138,8 @@ export default async function RootLayout({
         <ThemeStyleInjector />
         <script
           defer
-          src="https://umami.metropolreklam.net/script.js"
-          data-website-id="c65672a6-edde-4f6f-9e33-968722cbdd60"
+          src="https://umami.bloomflora.com.tr/script.js"
+          data-website-id="87caaf65-f1dc-4131-a225-2b00ac1a34a5"
         />
         <script
           type="application/ld+json"
