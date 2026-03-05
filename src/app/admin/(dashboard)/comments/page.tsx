@@ -288,11 +288,11 @@ export default function AdminCommentsPage() {
     const supabase = createClient();
     supabase
       .from('site_settings')
-      .select('value')
+      .select('key, value')
       .eq('key', 'comments_enabled')
       .single()
       .then(({ data }) => {
-        if (data) setCommentsEnabled(data.value as boolean);
+        if (data) setCommentsEnabled((data as unknown as { value: boolean }).value);
       });
   }, []);
 
