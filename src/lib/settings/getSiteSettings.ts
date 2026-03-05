@@ -11,6 +11,7 @@ export interface SiteSettings {
   whatsapp_number: string;
   whatsapp_message: string;
   whatsapp_enabled: boolean;
+  comments_enabled: boolean;
   contact_email: string;
   contact_phone: string;
   contact_address: string;
@@ -28,6 +29,7 @@ const DEFAULTS: SiteSettings = {
   whatsapp_number: '',
   whatsapp_message: 'Merhaba, bilgi almak istiyorum.',
   whatsapp_enabled: true,
+  comments_enabled: true,
   contact_email: '',
   contact_phone: '',
   contact_address: '',

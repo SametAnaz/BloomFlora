@@ -6,6 +6,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -259,6 +260,9 @@ export default function AdminCommentsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedThread, setExpandedThread] = useState<string | null>(null);
 
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
+  const [togglingComments, setTogglingComments] = useState(false);
+
   const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
@@ -278,6 +282,38 @@ export default function AdminCommentsPage() {
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
+
+  // Load comments_enabled setting
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'comments_enabled')
+      .single()
+      .then(({ data }) => {
+        if (data) setCommentsEnabled(data.value as boolean);
+      });
+  }, []);
+
+  const handleToggleComments = async () => {
+    setTogglingComments(true);
+    const newVal = !commentsEnabled;
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('site_settings')
+        .upsert(
+          { key: 'comments_enabled', value: newVal as never, updated_at: new Date().toISOString() } as never,
+          { onConflict: 'key' }
+        );
+      setCommentsEnabled(newVal);
+    } catch {
+      console.error('Yorum ayarı kaydedilemedi');
+    } finally {
+      setTogglingComments(false);
+    }
+  };
 
   // Reset page when tab changes
   useEffect(() => {
@@ -346,11 +382,58 @@ export default function AdminCommentsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#4D1D2A]">Yorumlar</h1>
-        <p className="mt-1 text-sm text-[#8B6F75]">
-          Müşteri yorumlarını yönetin, onaylayın veya reddedin.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#4D1D2A]">Yorumlar</h1>
+          <p className="mt-1 text-sm text-[#8B6F75]">
+            Müşteri yorumlarını yönetin, onaylayın veya reddedin.
+          </p>
+        </div>
+        {/* Comments Enable/Disable Toggle */}
+        <div className="flex items-center gap-4 rounded-2xl border border-[#E8D5D0] bg-gradient-to-r from-[#FDF6F0] to-white px-5 py-3.5 shadow-sm">
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-[#4D1D2A]">Yorumlar</span>
+            <span className="text-xs text-[#8B6F75]">
+              {commentsEnabled ? 'Müşteriler yorum yapabilir' : 'Yorumlar gizli'}
+            </span>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={commentsEnabled}
+            onClick={handleToggleComments}
+            disabled={togglingComments}
+            className={`relative ml-2 flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#8B3A4A]/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+              commentsEnabled
+                ? 'bg-[#8B3A4A] shadow-[0_2px_8px_rgba(139,58,74,0.3)]'
+                : 'bg-[#DDD0D3]'
+            }`}
+          >
+            <span
+              className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-md transition-all duration-300 ${
+                commentsEnabled ? 'translate-x-7' : 'translate-x-0'
+              }`}
+            >
+              {togglingComments ? (
+                <svg className="h-2.5 w-2.5 animate-spin text-[#8B3A4A]" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : commentsEnabled ? (
+                <svg className="h-2.5 w-2.5 text-[#8B3A4A]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="h-2.5 w-2.5 text-[#C4959E]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </span>
+          </button>
+          <span className={`w-12 text-xs font-bold ${commentsEnabled ? 'text-[#8B3A4A]' : 'text-[#C4959E]'}`}>
+            {commentsEnabled ? 'Açık' : 'Kapalı'}
+          </span>
+        </div>
       </div>
 
       {/* Tabs */}

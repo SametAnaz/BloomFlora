@@ -7,6 +7,8 @@ import * as React from 'react';
 
 import { z } from 'zod';
 
+import { Turnstile } from '@/components/turnstile';
+
 import { backgroundConfigSchema, spacingConfigSchema, type ModuleDefinition } from '../../types';
 
 // =====================================================
@@ -32,6 +34,8 @@ export const contactFormV1ConfigSchema = z.object({
   layout: z.enum(['stacked', 'inline']).default('stacked'),
   /** Email recipient (admin only) */
   recipientEmail: z.string().email().optional(),
+  /** Enable Cloudflare Turnstile bot protection */
+  enableTurnstile: z.boolean().default(true),
   /** Spacing */
   spacing: spacingConfigSchema.default({}),
   /** Background */
@@ -53,6 +57,7 @@ export const contactFormV1DefaultConfig: ContactFormV1Config = {
   submitText: 'Mesaj Gönder',
   successMessage: 'Mesajınız başarıyla gönderildi! En kısa sürede dönüş yapacağız.',
   layout: 'stacked',
+  enableTurnstile: true,
   spacing: {
     paddingTop: 'lg',
     paddingBottom: 'lg',
@@ -87,6 +92,20 @@ function ContactFormV1Render({
 }) {
   const { config } = block;
   const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'preview'>('idle');
+  const [showTurnstile, setShowTurnstile] = React.useState(false);
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+
+  const doSubmit = React.useCallback(() => {
+    setSubmitStatus('success');
+    setShowTurnstile(false);
+    setTurnstileToken(null);
+  }, []);
+
+  React.useEffect(() => {
+    if (turnstileToken) {
+      doSubmit();
+    }
+  }, [turnstileToken, doSubmit]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,8 +113,11 @@ function ContactFormV1Render({
       setSubmitStatus('preview');
       return;
     }
-    // TODO: Implement form submission
-    setSubmitStatus('success');
+    if (config.enableTurnstile && !turnstileToken) {
+      setShowTurnstile(true);
+      return;
+    }
+    doSubmit();
   };
 
   const { getBackgroundStyle, needsOverlay } = require('../../shared/background-picker') as typeof import('../../shared/background-picker');
@@ -214,10 +236,27 @@ function ContactFormV1Render({
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="w-full rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60"
+              disabled={showTurnstile && !turnstileToken}
             >
               {config.submitText}
             </button>
+
+            {/* Turnstile Bot Protection */}
+            {config.enableTurnstile && showTurnstile && (
+              <div className="mt-4 flex flex-col items-center gap-2 rounded-lg border border-input bg-muted/40 p-4">
+                <p className="text-xs text-muted-foreground">Lütfen aşağıdaki doğrulamayı tamamlayın</p>
+                <Turnstile
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => {
+                    setShowTurnstile(false);
+                    setTurnstileToken(null);
+                  }}
+                  theme="auto"
+                />
+              </div>
+            )}
           </form>
         </div>
       </div>
@@ -340,6 +379,31 @@ function ContactFormV1Editor({
             className="rounded"
           />
           <span className="text-sm">Konu</span>
+        </label>
+      </div>
+
+      <div className="border-t pt-4">
+        <label className="block text-sm font-medium mb-2">Bot Koruması</label>
+        <label className="flex items-center justify-between gap-3 rounded-lg border border-input bg-muted/30 px-3 py-2.5">
+          <div>
+            <span className="text-sm font-medium">Turnstile Doğrulama</span>
+            <p className="text-xs text-muted-foreground mt-0.5">Form gönderiminde bot testi uygula</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={config.enableTurnstile}
+            onClick={() => onChange({ ...config, enableTurnstile: !config.enableTurnstile })}
+            className={`relative flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-1 ${
+              config.enableTurnstile ? 'bg-primary shadow-[0_1px_6px_rgba(0,0,0,0.2)]' : 'bg-muted-foreground/30'
+            }`}
+          >
+            <span
+              className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow transition-all duration-300 ${
+                config.enableTurnstile ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
         </label>
       </div>
     </div>

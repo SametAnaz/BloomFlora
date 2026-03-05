@@ -267,7 +267,7 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
       ) : null}
 
       {/* Comments Section */}
-      <ProductComments itemId={item.id} />
+      {siteSettings.comments_enabled ? <ProductComments itemId={item.id} /> : null}
 
       {/* Back Link */}
       <div className="container-mobile py-8">
