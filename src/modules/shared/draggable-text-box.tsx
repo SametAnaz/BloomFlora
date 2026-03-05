@@ -1,15 +1,15 @@
 /**
  * DraggableTextBox — admin preview modunda metin öğelerini sürükle-bırak ile konumlandırır.
  *
- * Yaklaşım: `position: relative` + `left/top` offset.
- * Elemanlar belge akışında kalır, sadece görsel olarak kaydırılır.
+ * Yaklaşım: `position: relative` + `transform: translate(px, px)`.
+ * Referans eleman: en yakın <section> (hem sürükleme hem render için tutarlı).
  * position.x=50, position.y=50 → offset yok (varsayılan).
  * position.x=60 → sağa %10, position.y=40 → yukarı %10.
  */
 
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 
 // ─── Schema ──────────────────────────────────────────
@@ -20,6 +20,12 @@ export const textPositionSchema = z.object({
 export type TextPosition = z.infer<typeof textPositionSchema>;
 
 export const defaultTextPosition: TextPosition = { x: 50, y: 50 };
+
+// ─── Helpers ─────────────────────────────────────────
+/** Find the nearest <section> ancestor or fall back to parentElement */
+function getRefElement(el: HTMLElement): HTMLElement {
+  return (el.closest('section') as HTMLElement) ?? el.parentElement ?? el;
+}
 
 // ─── Component ───────────────────────────────────────
 interface DraggableTextBoxProps {
@@ -41,12 +47,44 @@ export function DraggableTextBox({
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const didDragRef = useRef(false);
+  const isDraggingRef = useRef(false); // ref to prevent React re-render from resetting inline styles
+
+  // Reference element dimensions (section) for consistent drag ↔ render
+  const refSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
 
   const posX = position?.x ?? 50;
   const posY = position?.y ?? 50;
   const offsetX = posX - 50;
   const offsetY = posY - 50;
   const hasOffset = offsetX !== 0 || offsetY !== 0;
+
+  // ─────── Measure reference element (section) ──────
+  useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const ref = getRefElement(el);
+
+    const measure = () => {
+      refSizeRef.current = { w: ref.offsetWidth, h: ref.offsetHeight };
+      // Update inline style if not currently dragging
+      if (!isDraggingRef.current && el) {
+        const ox = (posX - 50);
+        const oy = (posY - 50);
+        if (ox !== 0 || oy !== 0) {
+          const px = (ox / 100) * refSizeRef.current.w;
+          const py = (oy / 100) * refSizeRef.current.h;
+          el.style.transform = `translate(${px}px, ${py}px)`;
+        } else {
+          el.style.transform = '';
+        }
+      }
+    };
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(ref);
+    return () => ro.disconnect();
+  }, [posX, posY]);
 
   // ─────── Pointer handlers ──────────────────────────
   const handlePointerDown = useCallback(
@@ -55,10 +93,11 @@ export function DraggableTextBox({
       e.preventDefault();
       e.stopPropagation();
 
-      const parent = boxRef.current?.parentElement;
-      if (!parent) return;
+      const el = boxRef.current;
+      if (!el) return;
 
-      const parentRect = parent.getBoundingClientRect();
+      const ref = getRefElement(el);
+      const refRect = ref.getBoundingClientRect();
 
       dragStart.current = {
         startX: e.clientX,
@@ -66,6 +105,7 @@ export function DraggableTextBox({
         origX: posX,
         origY: posY,
       };
+      isDraggingRef.current = true;
       setDragging(true);
       didDragRef.current = true;
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -75,12 +115,14 @@ export function DraggableTextBox({
         const dx = ev.clientX - dragStart.current.startX;
         const dy = ev.clientY - dragStart.current.startY;
 
-        const newX = dragStart.current.origX + (dx / parentRect.width) * 100;
-        const newY = dragStart.current.origY + (dy / parentRect.height) * 100;
+        const newX = dragStart.current.origX + (dx / refRect.width) * 100;
+        const newY = dragStart.current.origY + (dy / refRect.height) * 100;
 
-        if (boxRef.current) {
-          boxRef.current.style.left = `${newX - 50}%`;
-          boxRef.current.style.top = `${newY - 50}%`;
+        // Pixel offset using same reference dimensions as render
+        const newPxX = ((newX - 50) / 100) * refRect.width;
+        const newPxY = ((newY - 50) / 100) * refRect.height;
+        if (el) {
+          el.style.transform = `translate(${newPxX}px, ${newPxY}px)`;
         }
       };
 
@@ -90,14 +132,15 @@ export function DraggableTextBox({
         const dy = ev.clientY - dragStart.current.startY;
 
         const newX = Math.round(
-          Math.min(100, Math.max(0, dragStart.current.origX + (dx / parentRect.width) * 100))
+          Math.min(100, Math.max(0, dragStart.current.origX + (dx / refRect.width) * 100))
         );
         const newY = Math.round(
-          Math.min(100, Math.max(0, dragStart.current.origY + (dy / parentRect.height) * 100))
+          Math.min(100, Math.max(0, dragStart.current.origY + (dy / refRect.height) * 100))
         );
 
         onPositionChange({ x: newX, y: newY });
         dragStart.current = null;
+        isDraggingRef.current = false;
         setDragging(false);
 
         window.removeEventListener('pointermove', onMove);
@@ -139,10 +182,10 @@ export function DraggableTextBox({
     return <div className={className}>{children}</div>;
   }
 
+  // Transform is applied via useLayoutEffect + ResizeObserver (not via React style)
+  // to keep drag ↔ render consistent and avoid React re-render conflicts during drag
   const style: React.CSSProperties = {
     position: 'relative',
-    left: `${offsetX}%`,
-    top: `${offsetY}%`,
   };
 
   return (
