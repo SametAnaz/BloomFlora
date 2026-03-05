@@ -70,7 +70,7 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
 
   if (!isCartOpen) return null;
 
-  /* ── Build WhatsApp message (structured JSON for n8n parsing) ── */
+  /* ── Build WhatsApp message (human-readable text) ── */
   const handleCheckout = () => {
     if (!phone.trim()) {
       setCheckoutError('Telefon numarası gereklidir');
@@ -78,6 +78,8 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
     }
     setCheckoutError('');
 
+    /*
+    // ── Eski JSON formatı (n8n parsing için) ──
     const order = {
       type: 'BLOOMFLORA_ORDER',
       version: '1.1',
@@ -107,8 +109,49 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
         currency: 'TRY',
       },
     };
-
     const msg = `[BLOOMFLORA_ORDER]\n${JSON.stringify(order, null, 2)}`;
+    */
+
+    // ── Yeni insan-okunabilir metin formatı ──
+    const lines: string[] = [];
+    lines.push('🌸 *BLOOMFLORA SİPARİŞ*');
+    lines.push('');
+
+    // Müşteri bilgileri
+    if (fullName.trim()) lines.push(`👤 *Ad Soyad:* ${fullName.trim()}`);
+    lines.push(`📞 *Telefon:* ${phone.trim()}`);
+    if (address.trim()) lines.push(`📍 *Adres:* ${address.trim()}`);
+    lines.push('');
+
+    // Ürünler
+    lines.push('🛒 *Ürünler:*');
+    lines.push('─'.repeat(20));
+    items.forEach((item, idx) => {
+      const lineTotal = (item.price ?? 0) * item.quantity;
+      lines.push(`${idx + 1}. *${item.name}*`);
+      if (item.productCode) lines.push(`   Ürün Kodu: ${item.productCode}`);
+      lines.push(`   Adet: ${item.quantity} × ${(item.price ?? 0).toFixed(2)} ₺ = *${lineTotal.toFixed(2)} ₺*`);
+      if (item.giftCardText) lines.push(`   🎁 Kart Notu: ${item.giftCardText}`);
+      if (item.customAttributes.length > 0) {
+        item.customAttributes.forEach((attr: { key: string; value: string }) => {
+          lines.push(`   • ${attr.key}: ${attr.value}`);
+        });
+      }
+      lines.push('');
+    });
+
+    // Sipariş notu
+    if (orderNote.trim()) {
+      lines.push(`📝 *Sipariş Notu:* ${orderNote.trim()}`);
+      lines.push('');
+    }
+
+    // Özet
+    lines.push('─'.repeat(20));
+    lines.push(`📦 *Toplam Ürün:* ${totalCount}`);
+    lines.push(`💰 *Toplam Tutar:* ${totalPrice.toFixed(2)} ₺`);
+
+    const msg = lines.join('\n');
 
     const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
