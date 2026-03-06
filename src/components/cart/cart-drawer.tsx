@@ -27,7 +27,6 @@ function GiftCardField({ giftCardText, onChange }: { giftCardText: string; onCha
             : 'text-[#8B6F75] hover:text-[#4D1D2A] border border-[#E8D5D0] hover:border-[#8B3A4A]'
         }`}
       >
-        <span className="text-sm">🎁</span>
         {open ? 'Hediye Kartı Eklendi' : 'Hediye Kartı Ekle'}
       </button>
       {open && (
@@ -114,24 +113,24 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
 
     // ── Yeni insan-okunabilir metin formatı ──
     const lines: string[] = [];
-    lines.push('🌸 *BLOOMFLORA SİPARİŞ*');
+    lines.push('*BLOOMFLORA SİPARİŞ*');
     lines.push('');
 
     // Müşteri bilgileri
-    if (fullName.trim()) lines.push(`👤 *Ad Soyad:* ${fullName.trim()}`);
-    lines.push(`📞 *Telefon:* ${phone.trim()}`);
-    if (address.trim()) lines.push(`📍 *Adres:* ${address.trim()}`);
+    if (fullName.trim()) lines.push(`*Ad Soyad:* ${fullName.trim()}`);
+    lines.push(`*Telefon:* ${phone.trim()}`);
+    if (address.trim()) lines.push(`*Adres:* ${address.trim()}`);
     lines.push('');
 
     // Ürünler
-    lines.push('🛒 *Ürünler:*');
+    lines.push('*Ürünler:*');
     lines.push('─'.repeat(20));
     items.forEach((item, idx) => {
       const lineTotal = (item.price ?? 0) * item.quantity;
       lines.push(`${idx + 1}. *${item.name}*`);
       if (item.productCode) lines.push(`   Ürün Kodu: ${item.productCode}`);
       lines.push(`   Adet: ${item.quantity} × ${(item.price ?? 0).toFixed(2)} ₺ = *${lineTotal.toFixed(2)} ₺*`);
-      if (item.giftCardText) lines.push(`   🎁 Kart Notu: ${item.giftCardText}`);
+      if (item.giftCardText) lines.push(`   Kart Notu: ${item.giftCardText}`);
       if (item.customAttributes.length > 0) {
         item.customAttributes.forEach((attr) => {
           lines.push(`   • ${attr.name}: ${attr.value}`);
@@ -142,14 +141,14 @@ export function CartDrawer({ whatsappNumber }: CartDrawerProps) {
 
     // Sipariş notu
     if (orderNote.trim()) {
-      lines.push(`📝 *Sipariş Notu:* ${orderNote.trim()}`);
+      lines.push(`*Sipariş Notu:* ${orderNote.trim()}`);
       lines.push('');
     }
 
     // Özet
     lines.push('─'.repeat(20));
-    lines.push(`📦 *Toplam Ürün:* ${totalCount}`);
-    lines.push(`💰 *Toplam Tutar:* ${totalPrice.toFixed(2)} ₺`);
+    lines.push(`*Toplam Ürün:* ${totalCount}`);
+    lines.push(`*Toplam Tutar:* ${totalPrice.toFixed(2)} ₺`);
 
     const msg = lines.join('\n');
 
