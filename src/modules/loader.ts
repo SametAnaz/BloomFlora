@@ -17,6 +17,7 @@ import { richTextV1Module } from './core/richText';
 import { statsV1Module } from './core/stats';
 import { teamV1Module } from './core/team';
 import { testimonialsV1Module } from './core/testimonials';
+import { instagramReelsV1Module } from './core/instagramReels';
 import { videoV1Module } from './core/video';
 import { registerModule } from './registry';
 
@@ -48,6 +49,7 @@ export function initializeModules(): void {
   // Register media modules
   registerModule(imageGalleryV1Module);
   registerModule(videoV1Module);
+  registerModule(instagramReelsV1Module);
   registerModule(logosV1Module);
 
   // Register contact modules
@@ -68,7 +70,7 @@ export function initializeModules(): void {
 
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable-next-line no-console
-    console.info('[Modules] Initialized with 15 modules');
+    console.info('[Modules] Initialized with 16 modules');
   }
 }
 

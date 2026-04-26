@@ -18,6 +18,7 @@ export * from './team';
 export * from './imageGallery';
 export * from './video';
 export * from './logos';
+export * from './instagramReels';
 
 // Contact modules
 export * from './contactForm';
