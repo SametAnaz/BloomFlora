@@ -39,7 +39,9 @@ export function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className={`${cfg.sticky ? 'sticky top-0' : ''} z-50 bg-[#4D1D2A] text-[#F5E6E8] backdrop-blur`}>
+    <header className={`${cfg.sticky ? 'sticky top-0' : ''} relative z-50 bg-[#4B0720]/90 text-[#F5E6E8] backdrop-blur-sm`}>
+      {/* Gradient bottom border */}
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#C4717D]/60 to-transparent" />
       <div className="container-mobile">
         <div className={`flex h-16 items-center ${cfg.logoPosition === 'center' ? 'justify-center' : 'justify-between'}`}>
           {/* Logo */}
@@ -64,13 +66,17 @@ export function Header({
             </div>
           )}
 
-          <Link href="/" className="flex items-center gap-2">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={siteName} className="h-10 w-auto" />
-            ) : (
-              <span className="text-xl font-bold text-[#D4919A]">{siteName}</span>
-            )}
+          <Link href="/" className="flex items-center" aria-label={siteName}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/bloom_flora_banner2.png"
+              alt={siteName}
+              className="h-10 w-auto"
+              style={{
+                maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
+              }}
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -129,21 +135,21 @@ export function Header({
 
         {/* Mobile Navigation */}
         {isMenuOpen ? <nav className="border-t border-[#6B2D3D] py-4 md:hidden">
-            <ul className="flex flex-col gap-2">
-              {navItems.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    {...(item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block rounded-md px-3 py-2 text-base font-medium text-[#C4959E] transition-colors hover:bg-[#5E2A38] hover:text-[#F5E6E8]"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav> : null}
+          <ul className="flex flex-col gap-2">
+            {navItems.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  {...(item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block rounded-md px-3 py-2 text-base font-medium text-[#C4959E] transition-colors hover:bg-[#5E2A38] hover:text-[#F5E6E8]"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav> : null}
       </div>
     </header>
   );

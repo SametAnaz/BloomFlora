@@ -313,7 +313,7 @@ export default async function HomePage() {
   try {
     const supabase = await createClient();
     let pageData: PageRow | null = null;
-    
+
     // Get the home page by slug
     const { data: homePage } = await supabase
       .from('pages')
@@ -350,9 +350,9 @@ export default async function HomePage() {
         console.error('[HomePage] Auto-seed failed:', seedError);
       }
     }
-    
+
     console.log('[HomePage] Fetched page:', pageData?.slug, 'blocks count:', pageData?.blocks?.length);
-    
+
     if (pageData) {
       // Check if blocks exist and are valid
       if (pageData.blocks && Array.isArray(pageData.blocks) && pageData.blocks.length > 0) {
